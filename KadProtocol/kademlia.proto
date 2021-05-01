@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "request.proto";
+import "response.proto";
+
+enum NodeState {
+    RUNNING = 0;
+    STOP    = 1;
+    BUSY    = 2;
+}
+
+message KademliaMessage {
+    NodeState state     = 1;
+    uint64    messageID = 2;
+
+    oneof payload {
+        Request  request  = 3;
+        Response response = 4;
+    }
+}

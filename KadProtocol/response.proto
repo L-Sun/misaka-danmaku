@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+message Response {
+    bytes origin = 1;
+    oneof response {
+        StoreResponse     store     = 2;
+        FindNodeResponse  findNode  = 3;
+        FindValueResponse findValue = 4;
+    }
+}
+
+message StoreResponse {
+    enum State {
+        SUCCESS = 0;
+        FAILED  = 1;
+    }
+
+    State state = 1;
+}
+
+message FindNodeResponse {
+    message NodeInfo {
+        bytes id = 1;
+        oneof address {
+            fixed32 ipv4 = 2;
+            bytes   ipv6 = 3;
+        }
+        uint32 port = 4;
+    }
+    repeated NodeInfo nodes = 1;
+}
+
+message FindValueResponse {
+    message Data {
+        bytes key   = 1;
+        bytes value = 2;
+    }
+
+    repeated Data data = 1;
+}
