@@ -59,6 +59,8 @@ cppcoro::task<NodeState> UdpServer::Ping(const cppcoro::net::ip_endpoint& remote
     auto message = GenerateMessage();
     auto buffer  = message.SerializeAsString();
 
+    m_Logger->debug("remote: {}", remote.address().to_string());
+
     co_await SendMessage(remote, message);
 
     // wait response here

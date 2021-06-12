@@ -8,10 +8,10 @@ protected:
     ServerTest() : server("127.0.0.1", 8000) {}
     Misaka::UdpServer server;
 
-    static Misaka::UdpServer remote;
+    // static Misaka::UdpServer remote;
 };
 
-Misaka::UdpServer ServerTest::remote = Misaka::UdpServer("127.0.0.1", 6000);
+// Misaka::UdpServer ServerTest::remote = Misaka::UdpServer("127.0.0.1", 6000);
 
 TEST_F(ServerTest, MessageTest) {
     auto handle_store = [&](const StoreRequest& request) -> StoreResponse {
@@ -38,36 +38,37 @@ TEST_F(ServerTest, MessageTest) {
         return response;
     };
 
-    remote.SetHandleRequestProcessor(
-        [&](const Request& request) {
-            Response response;
-            response.set_origin("Haowen");
-            switch (request.request_case()) {
-                case Request::RequestCase::kStore: {
-                    auto store_res = handle_store(request.store());
-                    response.set_allocated_store(&store_res);
-                } break;
-                case Request::RequestCase::kFindNode: {
-                    auto find_node_res = handle_find_node(request.findnode());
-                    response.set_allocated_findnode(&find_node_res);
-                } break;
-                case Request::RequestCase::kFindValue: {
-                    auto find_value_res = handle_find_value(request.findvalue());
-                    response.set_allocated_findvalue(&find_value_res);
-                } break;
-                default:
-                    break;
-            }
-        });
+    // remote.SetHandleRequestProcessor(
+    //     [&](const Request& request) {
+    //         Response response;
+    //         response.set_origin("Haowen");
+    //         switch (request.request_case()) {
+    //             case Request::RequestCase::kStore: {
+    //                 auto store_res = handle_store(request.store());
+    //                 response.set_allocated_store(&store_res);
+    //             } break;
+    //             case Request::RequestCase::kFindNode: {
+    //                 auto find_node_res = handle_find_node(request.findnode());
+    //                 response.set_allocated_findnode(&find_node_res);
+    //             } break;
+    //             case Request::RequestCase::kFindValue: {
+    //                 auto find_value_res = handle_find_value(request.findvalue());
+    //                 response.set_allocated_findvalue(&find_value_res);
+    //             } break;
+    //             default:
+    //                 break;
+    //         }
+    //     });
 
     cppcoro::sync_wait(cppcoro::when_all_ready(
+        // [&]() -> cppcoro::task<> {
+        //     co_await remote.Listen();
+        // }(),
         [&]() -> cppcoro::task<> {
-            co_await remote.Listen();
+            co_await server.Listen();
         }(),
         [&]() -> cppcoro::task<> {
-            EXPECT_EQ(co_await server.Ping(remote.GetEndpoint()), NodeState::RUNNING);
-
-            remote.Stop();
+            EXPECT_EQ(co_await server.Ping(*cppcoro::net::ip_endpoint::from_string("127.0.0.1:6000")), NodeState::RUNNING);
         }()));
 }
 
