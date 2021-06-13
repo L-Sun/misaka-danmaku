@@ -11,7 +11,7 @@ class App {
 public:
     App(Kademlia::ID id);
 
-    void UpdateDanmuku();
+    void UpdateDanmaku();
     void Republish();
 
     void AddSeedPeer(const Peer& peer);
