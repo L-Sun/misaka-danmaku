@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 message Request {
-    bytes origin = 1;
     oneof request {
         StoreRequest     store     = 2;
         FindNodeRequest  findNode  = 3;
