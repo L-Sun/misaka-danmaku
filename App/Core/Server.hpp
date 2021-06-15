@@ -1,13 +1,16 @@
 #pragma once
 #include "kademlia.pb.h"
 #include "RouteTable.hpp"
+#include "Carrier.hpp"
 
 #include <asio/awaitable.hpp>
 #include <asio/ip/udp.hpp>
+
 #include <spdlog/logger.h>
 
 #include <array>
 #include <variant>
+#include <unordered_map>
 
 namespace Misaka {
 
@@ -27,7 +30,7 @@ public:
     }
 
     asio::awaitable<void>     Listen();
-    asio::awaitable<Response> Send(Request request);
+    asio::awaitable<Response> Send(Request&& request, const asio::ip::udp::endpoint& remote);
 
 private:
     static std::variant<std::monostate, Request, Response> PaserMessage(uint8_t* data, size_t size);
@@ -35,9 +38,13 @@ private:
     void ProcessRequest(const Request& request);
     void ProcessResponse(const Response& response);
 
+    KademliaMessage GenerateMessage(Request&& request);
+    KademliaMessage GenerateMessage(Response&& response);
+
     // asio
-    asio::ip::udp::socket     m_Socket;
-    std::array<uint8_t, 8192> m_ReciveBuffer;
+    asio::ip::udp::socket                           m_Socket;
+    std::array<uint8_t, 8192>                       m_ReciveBuffer;
+    std::unordered_map<uint64_t, Carrier<Response>> m_ResponsesPool;
 
     // route table
     Kademlia::RouteTable<asio::ip::udp::endpoint>& m_RouteTable;

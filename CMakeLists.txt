@@ -19,3 +19,6 @@ target_link_libraries(echo_server PRIVATE asio)
 
 add_executable(client client.cpp)
 target_link_libraries(client PRIVATE asio)
+
+add_executable(playground playground.cpp)
+target_link_libraries(playground PRIVATE asio)

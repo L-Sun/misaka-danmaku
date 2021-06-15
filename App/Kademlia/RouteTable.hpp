@@ -9,6 +9,8 @@ template <typename T>
 class RouteTable {
 public:
     RouteTable(ID id) : m_ID(std::move(id)) {}
+    auto GetID() const noexcept { return m_ID; }
+
     void Add(ID id, T val) {
         auto dis = cpl(m_ID, id);
         m_Buckets.at(dis).Add(std::move(id), std::move(val));

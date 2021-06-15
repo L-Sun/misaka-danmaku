@@ -5,6 +5,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <format>
+#include <chrono>
 
 namespace Misaka {
 
@@ -57,8 +58,23 @@ asio::awaitable<void> UdpServer::Listen() {
     }
 }
 
-asio::awaitable<Response> UdpServer::Send(Request request) {
-    // m_RouteTable.Get()
+asio::awaitable<Response> UdpServer::Send(Request&& request, const asio::ip::udp::endpoint& remote) {
+    auto message = GenerateMessage(std::move(request));
+    auto buffer  = message.SerializeAsString();
+    try {
+        // co_await m_Socket.async_send_to(asio::buffer(buffer), remote, asio::use_awaitable);
+    } catch (const std::exception& e) {
+        m_Logger->error(e.what());
+    }
+    uint64_t message_id = message.messageid();
+
+    auto x = co_await m_ResponsesPool.at(message_id);
+}
+
+KademliaMessage UdpServer::GenerateMessage(Request&& request) {
+}
+
+KademliaMessage UdpServer::GenerateMessage(Response&& response) {
 }
 
 }  // namespace Misaka
