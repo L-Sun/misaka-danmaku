@@ -2,10 +2,15 @@ syntax = "proto3";
 
 message Request {
     oneof request {
+        PingRequest      ping      = 1;
         StoreRequest     store     = 2;
         FindNodeRequest  findNode  = 3;
         FindValueRequest findValue = 4;
     }
+}
+
+message PingRequest {
+    int32 _placeholder = 1;
 }
 
 message StoreRequest {

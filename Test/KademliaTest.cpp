@@ -2,7 +2,16 @@
 
 #include <gtest/gtest.h>
 
+#include <unordered_set>
+
 using namespace Misaka::Kademlia;
+
+TEST(IDTest, RandomID) {
+    std::unordered_set<ID> ids;
+    for (size_t i = 0; i < 1000; i++) {
+        ASSERT_NO_THROW(ids.emplace(random_bitset<160>()));
+    }
+}
 
 TEST(DistanceTest, DifferentID) {
     std::bitset<8> id1, id2;
@@ -45,6 +54,11 @@ TEST_F(LRUTest, Add) {
 TEST_F(LRUTest, Get) {
     EXPECT_EQ(cache.Get(0), 0);
     EXPECT_EQ(cache.Get(9), std::nullopt);
+
+    LRUCache<int, int, 8> cache2;
+    cache2.Add(0, 1);
+    EXPECT_EQ(cache2.Get(0), 1);
+    EXPECT_EQ(cache2.Get(0), 1);
 }
 
 TEST_F(LRUTest, WeedOut) {
@@ -64,6 +78,23 @@ TEST_F(LRUTest, Sequence) {
     i = 0;
     for (const auto& [key, value] : cache)
         EXPECT_EQ(value, i++);
+
+    std::array get_seq = {5, 3, 2, 7, 0, 2, 1, 6};
+    for (auto&& e : get_seq)
+        EXPECT_EQ(cache.Get(e), e);
+
+    std::array seq = {6, 1, 2, 0, 7, 3, 5, 4};
+    i              = 0;
+    for (const auto& [key, value] : cache)
+        EXPECT_EQ(value, seq[i++]);
+}
+
+TEST(TableTest, Add) {
+    RouteTable<int> table;
+    auto            id = random_bitset<IDsize>();
+    table.Add(id, 32);
+    EXPECT_TRUE(table.Get(id).Get(id).has_value());
+    EXPECT_EQ(table.Get(id).Get(id).value(), 32);
 }
 
 int main(int argc, char** argv) {

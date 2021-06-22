@@ -11,12 +11,19 @@ class LRUCache {
     using Iter = typename std::list<Node>::iterator;
 
 public:
+    LRUCache() = default;
+    // Can not use default copy or assignment constructor because
+    // the iter of copy instance is point to node of origin item.
+    // For simplicity, the both function are marked `delete`
+    LRUCache(const LRUCache&) = delete;
+    LRUCache& operator=(const LRUCache&) = delete;
+
     void Add(Key key, Value val) {
         if (m_Map.count(key) != 0) {
             MakeRecently(key);
             m_Cache.front().second = std::move(val);
         } else {
-            if (m_Map.size() == Size) RemoveLeastRecently();
+            if (Full()) RemoveLeastRecently();
 
             m_Cache.emplace_front(key, std::move(val));
             m_Map.emplace(std::move(key), m_Cache.begin());
@@ -37,7 +44,7 @@ public:
 
 private:
     void MakeRecently(const Key& key) {
-        m_Cache.splice(m_Cache.cbegin(), m_Cache, m_Map.at(key));
+        m_Cache.splice(m_Cache.begin(), m_Cache, m_Map.at(key));
     }
     void RemoveLeastRecently() {
         m_Map.erase(m_Cache.back().first);

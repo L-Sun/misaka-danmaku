@@ -1,22 +1,32 @@
 #pragma once
-#include "Kademlia.hpp"
+#include "LRUCache.hpp"
+
+#include <utils.hpp>
 
 #include <array>
+#include <bitset>
+#include <random>
 
 namespace Misaka::Kademlia {
+
+constexpr size_t BucketSize = 20;
+constexpr size_t IDsize     = 160;
+
+using ID = std::bitset<IDsize>;
 
 template <typename T>
 class RouteTable {
 public:
-    RouteTable(ID id) : m_ID(std::move(id)) {}
+    RouteTable() : m_ID(random_bitset<IDsize>()) {}
+
     auto GetID() const noexcept { return m_ID; }
 
     void Add(ID id, T val) {
         auto dis = cpl(m_ID, id);
-        m_Buckets.at(dis).Add(std::move(id), std::move(val));
+        m_Buckets.at(dis).Add(id, val);
     }
 
-    auto Get(const ID& id) const {
+    auto& Get(const ID& id) {
         auto dis = cpl(m_ID, id);
         return m_Buckets.at(dis);
     }

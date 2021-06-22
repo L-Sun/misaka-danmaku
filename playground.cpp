@@ -1,35 +1,23 @@
-#include <asio/io_context.hpp>
-#include <asio/co_spawn.hpp>
-#include <asio/detached.hpp>
-#include <asio/steady_timer.hpp>
-#include <asio/async_result.hpp>
-#include <asio/use_awaitable.hpp>
-
-#include <chrono>
 #include <iostream>
+#include <spdlog/logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <asio/co_spawn.hpp>
+#include <asio/io_context.hpp>
+#include <asio/detached.hpp>
 
 int main(int argc, char const* argv[]) {
-    asio::io_context io_context;
+    asio::io_context io_context(1);
 
-    asio::async_result result();
-
-    asio::co_spawn(
-        io_context, [&]() -> asio::awaitable<void> {
-            try {
-                std::cout << "OK" << std::endl;
-            } catch (const std::exception& e) {
-                std::cerr << e.what() << '\n';
-            }
-        },
-        asio::detached);
+    auto logger = spdlog::stdout_color_st("Test");
 
     asio::co_spawn(
         io_context, [&]() -> asio::awaitable<void> {
-            asio::steady_timer temp_timer(io_context, std::chrono::seconds(3));
-            co_await temp_timer.async_wait(asio::use_awaitable);
+            logger->warn("Hello");
+            co_return;
         },
         asio::detached);
 
     io_context.run();
+    system("PAUSE");
     return 0;
 }

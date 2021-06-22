@@ -2,10 +2,20 @@ syntax = "proto3";
 
 message Response {
     oneof response {
-        StoreResponse     store     = 1;
-        FindNodeResponse  findNode  = 2;
-        FindValueResponse findValue = 3;
+        PingResponse      ping      = 1;
+        StoreResponse     store     = 2;
+        FindNodeResponse  findNode  = 3;
+        FindValueResponse findValue = 4;
     }
+}
+
+message PingResponse {
+    enum State {
+        RUNNING = 0;
+        BUSY    = 1;
+        REJECT  = 2;
+    }
+    State state = 1;
 }
 
 message StoreResponse {

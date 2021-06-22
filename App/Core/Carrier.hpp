@@ -1,45 +1,57 @@
-#include <coroutine>
+#include <asio/io_context.hpp>
+#include <asio/awaitable.hpp>
+#include <asio/use_awaitable.hpp>
+#include <asio/steady_timer.hpp>
+#include <asio/redirect_error.hpp>
+
+#include <chrono>
 #include <optional>
+#include <unordered_map>
 
 namespace Misaka {
+
 template <typename T>
 class Carrier {
+    using Item = std::pair<std::optional<T>, asio::steady_timer>;
+
 public:
-    constexpr bool has_value() const noexcept {
-        return m_value.has_value();
+    Carrier(asio::io_context& io_context) : m_IOContext(io_context) {}
+
+    void Set(uint64_t id, T value) {
+        auto&& [_value, timer] = m_Goods.at(id);
+        _value                 = std::move(value);
+        timer.expires_after(std::chrono::seconds(0));
     }
 
-    void set(const T& value) noexcept {
-        m_value = value;
-        m_awaiter.resume();
-    }
+    asio::awaitable<std::optional<T>> Get(uint64_t id, std::chrono::steady_clock::duration timeout) {
+        if (m_RefCounters.count(id) != 0)
+            m_RefCounters.at(id)++;
+        else {
+            m_Goods.emplace(id, std::make_pair(std::nullopt, asio::steady_timer(m_IOContext, timeout)));
+            m_RefCounters.emplace(id, 1);
+        }
 
-    auto operator co_await() noexcept {
-        class awaiter {
-        public:
-            awaiter(Carrier& carrier) : m_carrier(carrier) {}
-            bool await_ready() const noexcept {
-                return m_carrier.has_value();
-            }
+        auto&& [value, timer] = m_Goods.at(id);
+        size_t& ref           = m_RefCounters.at(id);
 
-            bool await_suspend(std::coroutine_handle<> awaiter) {
-                m_carrier.m_awaiter = awaiter;
-                return true;
-            }
+        asio::error_code ec;
+        co_await timer.async_wait(asio::redirect_error(asio::use_awaitable, ec));
 
-            T await_resume() {
-                return m_carrier.m_value.value();
-            }
-
-        private:
-            Carrier& m_carrier;
-        };
-
-        return awaiter{*this};
+        if (ref > 1) {
+            ref--;
+            co_return value;
+        } else {
+            auto temp = std::move(value);
+            m_Goods.erase(id);
+            m_RefCounters.erase(id);
+            co_return temp;
+        }
     }
 
 private:
-    std::optional<T>        m_value;
-    std::coroutine_handle<> m_awaiter;
+    asio::io_context&                    m_IOContext;
+    std::unordered_map<uint64_t, Item>   m_Goods;
+    std::unordered_map<uint64_t, size_t> m_RefCounters;
 };
+
 }  // namespace Misaka
