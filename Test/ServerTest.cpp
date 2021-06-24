@@ -5,84 +5,59 @@
 
 #include <gtest/gtest.h>
 
+#include <list>
+
 using namespace Misaka;
 
-Misaka::UdpServer create_server_for_test(asio::io_context& io_context) {
-    thread_local uint16_t port = 4000;
-    return Misaka::UdpServer(io_context, "127.0.0.1", port++);
-}
+class ServerTest : public ::testing::Test {
+protected:
+    ServerTest() : io_context(1) {}
+    ~ServerTest() {
+        io_context.run();
+    }
 
-TEST(ServerTest, MessageTest) {
-    auto handle_store = [&](const StoreRequest& request) -> StoreResponse {
-        std::cout << "[STORE] Key: {" << request.key() << "} Value: {" << request.value() << "}" << std::endl;
-        StoreResponse response;
-        response.set_state(StoreResponse_State::StoreResponse_State_SUCCESS);
-        return response;
-    };
+    Misaka::UdpServer& create_server_for_test() {
+        thread_local uint16_t port   = 4000;
+        auto&                 server = servers.emplace_back(io_context, "127.0.0.1", port++);
+        asio::co_spawn(io_context, server.Listen(), asio::detached);
+        return server;
+    }
 
-    auto handle_find_node = [&](const FindNodeRequest& request) -> FindNodeResponse {
-        FindNodeResponse response;
-        auto             node_info = response.add_nodes();
-        node_info->set_id(request.id());
-        node_info->set_address("127.0.0.1");
-        node_info->set_port(6000);
-        return response;
-    };
+    template <typename F>
+    void co_test(F&& func) {
+        asio::co_spawn(
+            io_context, [&]() -> asio::awaitable<void> {
+                co_await func();
+                io_context.stop();
+            },
+            asio::detached);
+    }
 
-    auto handle_find_value = [&](const FindValueRequest& request) -> FindValueResponse {
-        FindValueResponse response;
-        auto              data = response.add_data();
-        data->set_key("Name");
-        data->set_value("Haowen");
-        return response;
-    };
+    asio::io_context             io_context;
+    std::list<Misaka::UdpServer> servers;
+};
 
-    asio::io_context io_context(1);
-    auto             remote = create_server_for_test(io_context);
+TEST_F(ServerTest, PingTest) {
+    co_test([&]() -> asio::awaitable<void> {
+        auto& s1 = create_server_for_test();
+        auto& s2 = create_server_for_test();
+        s2.RouteTable().Add(s1.RouteTable().GetID(), s1.Endpoint());
 
-    remote.SetRequestProcessor(
-        [&](const Request& request) {
-            Response response;
-            switch (request.request_case()) {
-                case Request::RequestCase::kStore: {
-                    auto store_res = handle_store(request.store());
-                    response.set_allocated_store(&store_res);
-                } break;
-                case Request::RequestCase::kFindNode: {
-                    auto find_node_res = handle_find_node(request.findnode());
-                    response.set_allocated_findnode(&find_node_res);
-                } break;
-                case Request::RequestCase::kFindValue: {
-                    auto find_value_res = handle_find_value(request.findvalue());
-                    response.set_allocated_findvalue(&find_value_res);
-                } break;
-                default:
-                    break;
-            }
-            return response;
+        s1.SetRequestProcessor([](const Request& req) -> Response {
+            Response res;
+            EXPECT_TRUE(req.has_ping());
+            res.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
+            return res;
         });
 
-    asio::co_spawn(io_context, remote.Listen(), asio::detached);
-
-    auto server    = create_server_for_test(io_context);
-    auto remote_id = remote.RouteTable().GetID();
-    server.RouteTable().Add(remote.RouteTable().GetID(), remote.Endpoint());
-    asio::co_spawn(io_context, server.Listen(), asio::detached);
-
-    asio::co_spawn(
-        io_context, [&]() -> asio::awaitable<void> {
-            Request ping;
-            ping.mutable_ping()->set__placeholder(1);
-            auto response = co_await server.Send(ping, remote_id);
-            if (response.has_value()) {
-                EXPECT_EQ(response->ping().state(), PingResponse_State::PingResponse_State_RUNNING);
-                io_context.stop();
-            } else {
-            }
-        },
-        asio::detached);
-
-    io_context.run();
+        Request req;
+        req.mutable_ping();
+        auto res = co_await s2.Send(req, s1.RouteTable().GetID());
+        if (!res.has_value()) {
+            ADD_FAILURE() << "the ping request expect has value";
+        } else
+            EXPECT_TRUE(res->ping().state() == PingResponse_State::PingResponse_State_RUNNING);
+    });
 }
 
 int main(int argc, char** argv) {

@@ -17,7 +17,7 @@ UdpServer::UdpServer(
     uint16_t          port)
     : m_Socket(io_context, asio::ip::udp::endpoint(asio::ip::make_address(address), port)),
       m_Carrier(io_context),
-      m_Logger(spdlog::stderr_color_mt(std::format("UDP Server {}:{}", address, port))) {
+      m_Logger(spdlog::stderr_color_st(std::format("UDP Server {}:{}", address, port))) {
 #if defined(_DEBUG)
 
     m_Logger->set_level(spdlog::level::debug);

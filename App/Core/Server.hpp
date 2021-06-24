@@ -22,6 +22,11 @@ public:
               std::string_view  address = "127.0.0.1",
               uint16_t          port    = 8000);
 
+    UdpServer(const UdpServer&) = delete;
+    UdpServer& operator=(const UdpServer&) = delete;
+    UdpServer(UdpServer&&)                 = delete;
+    UdpServer& operator=(UdpServer&&) = delete;
+
     // Bind endpoint to udp server
     void Bind(std::string_view address, uint16_t port);
 

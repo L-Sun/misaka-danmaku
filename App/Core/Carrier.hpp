@@ -27,7 +27,7 @@ public:
         if (m_RefCounters.count(id) != 0)
             m_RefCounters.at(id)++;
         else {
-            m_Goods.emplace(id, std::make_pair(std::nullopt, asio::steady_timer(m_IOContext, timeout)));
+            m_Goods.emplace(id, std::make_pair(std::nullopt, asio::steady_timer(m_IOContext.get(), timeout)));
             m_RefCounters.emplace(id, 1);
         }
 
@@ -49,9 +49,9 @@ public:
     }
 
 private:
-    asio::io_context&                    m_IOContext;
-    std::unordered_map<uint64_t, Item>   m_Goods;
-    std::unordered_map<uint64_t, size_t> m_RefCounters;
+    std::reference_wrapper<asio::io_context> m_IOContext;
+    std::unordered_map<uint64_t, Item>       m_Goods;
+    std::unordered_map<uint64_t, size_t>     m_RefCounters;
 };
 
 }  // namespace Misaka
