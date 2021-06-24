@@ -41,7 +41,6 @@ TEST_F(ServerTest, PingTest) {
     co_test([&]() -> asio::awaitable<void> {
         auto& s1 = create_server_for_test();
         auto& s2 = create_server_for_test();
-        s2.RouteTable().Add(s1.RouteTable().GetID(), s1.Endpoint());
 
         s1.SetRequestProcessor([](const Request& req) -> Response {
             Response res;
@@ -49,6 +48,7 @@ TEST_F(ServerTest, PingTest) {
             res.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
             return res;
         });
+        s2.RouteTable().Add(s1.RouteTable().GetID(), s1.Endpoint());
 
         Request req;
         req.mutable_ping();
