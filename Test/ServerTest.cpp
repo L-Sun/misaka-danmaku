@@ -45,7 +45,7 @@ TEST_F(ServerTest, PingTest) {
         s1.SetRequestProcessor([](const Request& req) -> Response {
             Response res;
             EXPECT_TRUE(req.has_ping());
-            res.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
+            res.mutable_ping()->set_state(PingResponse_State_RUNNING);
             return res;
         });
         s2.RouteTable().Add(s1.RouteTable().GetID(), s1.Endpoint());
@@ -55,8 +55,12 @@ TEST_F(ServerTest, PingTest) {
         auto res = co_await s2.Send(req, s1.RouteTable().GetID());
         if (!res.has_value()) {
             ADD_FAILURE() << "the ping request expect has value";
-        } else
-            EXPECT_TRUE(res->ping().state() == PingResponse_State::PingResponse_State_RUNNING);
+        } else {
+            EXPECT_EQ(res->ping().state(), PingResponse_State_RUNNING);
+        }
+
+        res = co_await s2.Send(req, Kademlia::random_bitset<Kademlia::IDsize>());
+        EXPECT_FALSE(res.has_value());
     });
 }
 

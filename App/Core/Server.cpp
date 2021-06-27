@@ -9,6 +9,9 @@
 #include <random>
 #include <chrono>
 
+template <class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+
 namespace Misaka {
 
 UdpServer::UdpServer(
@@ -47,7 +50,7 @@ asio::awaitable<void> UdpServer::Listen() {
 asio::awaitable<std::optional<Response>> UdpServer::Send(Request              request,
                                                          const Kademlia::ID&  remote,
                                                          std::chrono::seconds timeout) {
-    auto remote_endpoint = m_RouteTable.Get(remote).Get(remote);
+    auto remote_endpoint = m_RouteTable.GetBuckets(remote).Get(remote);
     if (!remote_endpoint.has_value())
         co_return std::nullopt;
 
@@ -78,11 +81,15 @@ KademliaMessage UdpServer::GenerateMessage(std::variant<Request, Response> paylo
     message.set_messageid(message_id.has_value() ? message_id.value() : distribution(generator));
     (*message.mutable_time()) = google::protobuf::util::TimeUtil::GetCurrentTime();
 
-    if (std::holds_alternative<Request>(payload)) {
-        (*message.mutable_request()) = std::move(std::get<Request>(payload));
-    } else {
-        (*message.mutable_response()) = std::move(std::get<Response>(payload));
-    }
+    std::visit(overloaded{
+                   [&](Request& arg) {
+                       (*message.mutable_request()) = std::move(arg);
+                   },
+                   [&](Response& arg) {
+                       (*message.mutable_response()) = std::move(arg);
+                   },
+               },
+               payload);
 
     return message;
 }

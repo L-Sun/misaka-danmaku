@@ -93,8 +93,8 @@ TEST(TableTest, Add) {
     RouteTable<int> table;
     auto            id = random_bitset<IDsize>();
     table.Add(id, 32);
-    EXPECT_TRUE(table.Get(id).Get(id).has_value());
-    EXPECT_EQ(table.Get(id).Get(id).value(), 32);
+    EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
+    EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 32);
 }
 
 int main(int argc, char** argv) {
