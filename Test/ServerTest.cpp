@@ -8,17 +8,20 @@
 #include <list>
 
 using namespace Misaka;
+using namespace std::chrono_literals;
 
 class ServerTest : public ::testing::Test {
 protected:
-    ServerTest() : io_context(1) {}
+    ServerTest()
+        : io_context(1),
+          offline_endpoint(asio::ip::make_address("127.0.0.2"), 62312) {}
     ~ServerTest() {
         io_context.run();
     }
 
     Misaka::UdpServer& create_server_for_test() {
         thread_local uint16_t port   = 4000;
-        auto&                 server = servers.emplace_back(Kademlia::random_bitset<Kademlia::IDsize>(), io_context, "127.0.0.1", port++);
+        auto&                 server = servers.emplace_back(io_context, "127.0.0.1", port++);
         asio::co_spawn(io_context, server.Listen(), asio::detached);
         return server;
     }
@@ -33,34 +36,28 @@ protected:
             asio::detached);
     }
 
+    asio::ip::udp::endpoint      offline_endpoint;
     asio::io_context             io_context;
     std::list<Misaka::UdpServer> servers;
 };
 
-TEST_F(ServerTest, PingTest) {
+TEST_F(ServerTest, MessageTest) {
     co_test([&]() -> asio::awaitable<void> {
         auto& s1 = create_server_for_test();
         auto& s2 = create_server_for_test();
 
-        s1.SetRequestProcessor([](const Request& req) -> Response {
+        s1.SetRequestProcessor([](Request req, asio::ip::udp::endpoint) -> Response {
             Response res;
-            EXPECT_TRUE(req.has_ping());
             res.mutable_ping()->set_state(PingResponse_State_RUNNING);
             return res;
         });
-        s2.RouteTable().Add(s1.RouteTable().GetID(), s1.Endpoint());
 
         Request req;
-        req.mutable_ping();
-        auto res = co_await s2.Send(req, s1.RouteTable().GetID());
-        if (!res.has_value()) {
-            ADD_FAILURE() << "the ping request expect has value";
-        } else {
-            EXPECT_EQ(res->ping().state(), PingResponse_State_RUNNING);
-        }
+        auto    res = co_await s2.Send(req, s1.Endpoint());
+        EXPECT_TRUE(res.has_value()) << "must have response if send a message to online client";
 
-        res = co_await s2.Send(req, Kademlia::random_bitset<Kademlia::IDsize>());
-        EXPECT_FALSE(res.has_value());
+        res = co_await s2.Send(req, offline_endpoint, 1s);
+        EXPECT_FALSE(res.has_value()) << "it should not have response if the remote is offline.";
     });
 }
 

@@ -19,16 +19,13 @@ UdpServer::UdpServer(
     asio::io_context& io_context,
     std::string_view  address,
     uint16_t          port)
-    : m_RouteTable(id),
-      m_Socket(io_context, asio::ip::udp::endpoint(asio::ip::make_address(address), port)),
+    : m_Socket(io_context, asio::ip::udp::endpoint(asio::ip::make_address(address), port)),
       m_Carrier(io_context),
       m_Logger(spdlog::stderr_color_st(std::format("UDP Server {}:{}", address, port))) {
 #if defined(_DEBUG)
-
     m_Logger->set_level(spdlog::level::debug);
-    m_Logger->debug("Init");
-
 #endif  // _DEBUG
+    m_Logger->info("Init");
 }
 
 asio::awaitable<void> UdpServer::Listen() {
@@ -49,21 +46,17 @@ asio::awaitable<void> UdpServer::Listen() {
     }
 }
 
-asio::awaitable<std::optional<Response>> UdpServer::Send(Request              request,
-                                                         const Kademlia::ID&  remote,
-                                                         std::chrono::seconds timeout) {
-    auto remote_endpoint = m_RouteTable.GetBuckets(remote).Get(remote);
-    if (!remote_endpoint.has_value())
-        co_return std::nullopt;
-
+asio::awaitable<std::optional<Response>> UdpServer::Send(Request                        request,
+                                                         const asio::ip::udp::endpoint& remote,
+                                                         std::chrono::seconds           timeout) {
     auto message = GenerateMessage(std::move(request));
     auto buffer  = message.SerializeAsString();
     try {
         m_Logger->debug("send message to {}:{}",
-                        remote_endpoint->get().address().to_string(),
-                        remote_endpoint->get().port());
+                        remote.address().to_string(),
+                        remote.port());
 
-        co_await m_Socket.async_send_to(asio::buffer(buffer), remote_endpoint->get(), asio::use_awaitable);
+        co_await m_Socket.async_send_to(asio::buffer(buffer), remote, asio::use_awaitable);
     } catch (const std::exception& e) {
         m_Logger->error(e.what());
     }
@@ -79,7 +72,6 @@ KademliaMessage UdpServer::GenerateMessage(std::variant<Request, Response> paylo
         std::numeric_limits<uint64_t>::max());
 
     KademliaMessage message;
-    message.set_originid(m_RouteTable.GetID().to_string());
     message.set_messageid(message_id.has_value() ? message_id.value() : distribution(generator));
     (*message.mutable_time()) = google::protobuf::util::TimeUtil::GetCurrentTime();
 
@@ -106,7 +98,7 @@ asio::awaitable<void> UdpServer::ProcessMessage(uint8_t* data, size_t n, const a
 
     uint64_t message_id = message.messageid();
     if (message.has_request()) {
-        auto response = m_RequestProcessor(message.request());
+        auto response = m_RequestProcessor(message.request(), remote);
         auto buffer   = GenerateMessage(response, message_id).SerializeAsString();
         try {
             m_Logger->debug("send message to {}:{}", remote.address().to_string(), remote.port());
