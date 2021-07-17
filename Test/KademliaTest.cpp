@@ -1,4 +1,5 @@
 #include "Kademlia.hpp"
+#include "TestUtils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -104,7 +105,7 @@ TEST_F(LRUTest, Sequence) {
 }
 
 TEST(TableTest, Add) {
-    RouteTable<int> table;
+    RouteTable<int> table(random_bitset<IDsize>());
     auto            id = random_bitset<IDsize>();
     table.Add(id, 32);
     EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
@@ -112,7 +113,7 @@ TEST(TableTest, Add) {
 }
 
 TEST(TableTest, AddSameID) {
-    RouteTable<int> table;
+    RouteTable<int> table(random_bitset<IDsize>());
     auto            id = random_bitset<IDsize>();
     table.Add(id, 32);
     EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
@@ -149,6 +150,40 @@ TEST(TableTest, GetBucket) {
     }
 
     EXPECT_EQ(table.GetBuckets(id).Size(), BucketSize);
+}
+
+class KademliaTest : public ::testing::Test {
+protected:
+    constexpr static size_t num_clients = 2;
+    KademliaTest()
+        : io_context(1),
+          seedServer(10086, io_context, "127.0.0.1", 10086),
+          clients{create_clients<num_clients>(io_context, 4000)} {
+        /* Init here */
+    }
+
+    ~KademliaTest() {
+        io_context.run();
+    }
+    asio::io_context                        io_context;
+    KademliaEngine                          seedServer;
+    std::array<KademliaEngine, num_clients> clients;
+
+private:
+    template <size_t N>
+    static auto create_clients(asio::io_context& io_context, uint16_t portBase) {
+        constexpr auto impl = []<size_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
+            return std::array{KademliaEngine(I, io_context, "127.0.0.1", portBase + I)...};
+        };
+        return impl(io_context, portBase, std::make_index_sequence<N>{});
+    }
+};
+
+TEST_F(KademliaTest, ConnectNetwork) {
+    co_test(io_context, [&]() -> asio::awaitable<void> {
+        EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 10086)) << "it should be successful to connect to network";
+        EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 10087)) << "it should be failed to connect unexsist network";
+    });
 }
 
 int main(int argc, char** argv) {

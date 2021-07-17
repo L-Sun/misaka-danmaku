@@ -15,29 +15,27 @@
 
 namespace Misaka::Network {
 
+using Endpoint = asio::ip::udp::endpoint;
+
 class UdpServer {
 public:
     UdpServer(asio::io_context& io_context, std::string_view address, uint16_t port);
 
-    // Bind endpoint to udp server
-    void Bind(std::string_view address, uint16_t port);
-
-    inline auto Endpoint() const noexcept { return m_Socket.local_endpoint(); }
+    inline auto GetEndpoint() const noexcept { return m_Socket.local_endpoint(); }
 
     // Set request processor
-    inline void SetRequestProcessor(
-        std::function<Response(Request req, asio::ip::udp::endpoint remote)> processor) noexcept {
+    inline void SetRequestProcessor(std::function<Response(Request req, Endpoint remote)> processor) noexcept {
         m_RequestProcessor = processor;
     }
 
     asio::awaitable<void> Listen();
 
-    asio::awaitable<std::optional<Response>> Send(Request                        request,
-                                                  const asio::ip::udp::endpoint& remote,
-                                                  std::chrono::seconds           timeout = std::chrono::seconds(30));
+    asio::awaitable<std::optional<Response>> Send(Request              request,
+                                                  const Endpoint&      remote,
+                                                  std::chrono::seconds timeout = std::chrono::seconds(3));
 
 private:
-    asio::awaitable<void> ProcessMessage(uint8_t* data, size_t n, const asio::ip::udp::endpoint& remote);
+    asio::awaitable<void> ProcessMessage(uint8_t* data, size_t n, const Endpoint& remote);
 
     KademliaMessage GenerateMessage(std::variant<Request, Response> payload,
                                     std::optional<uint64_t>         message_id = std::nullopt);
@@ -47,8 +45,8 @@ private:
     std::array<uint8_t, 8192> m_ReciveBuffer;
     Carrier<Response>         m_Carrier;
 
-    std::function<Response(Request, asio::ip::udp::endpoint)> m_RequestProcessor;
-    std::shared_ptr<spdlog::logger>                           m_Logger;
+    std::function<Response(Request, Endpoint)> m_RequestProcessor;
+    std::shared_ptr<spdlog::logger>            m_Logger;
 };
 
-}  // namespace Misaka
+}  // namespace Misaka::Network

@@ -1,7 +1,5 @@
 #include "Server.hpp"
-
-#include <asio/co_spawn.hpp>
-#include <asio/detached.hpp>
+#include "TestUtils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -26,34 +24,24 @@ protected:
         return server;
     }
 
-    template <typename F>
-    void co_test(F&& func) {
-        asio::co_spawn(
-            io_context, [&]() -> asio::awaitable<void> {
-                co_await func();
-                io_context.stop();
-            },
-            asio::detached);
-    }
-
-    asio::ip::udp::endpoint offline_endpoint;
-    asio::io_context        io_context;
-    std::list<UdpServer>    servers;
+    Endpoint             offline_endpoint;
+    asio::io_context     io_context;
+    std::list<UdpServer> servers;
 };
 
 TEST_F(ServerTest, MessageTest) {
-    co_test([&]() -> asio::awaitable<void> {
+    co_test(io_context, [&]() -> asio::awaitable<void> {
         auto& s1 = create_server_for_test();
         auto& s2 = create_server_for_test();
 
-        s1.SetRequestProcessor([](Request req, asio::ip::udp::endpoint) -> Response {
+        s1.SetRequestProcessor([](Request req, Endpoint) -> Response {
             Response res;
             res.mutable_ping()->set_state(PingResponse_State_RUNNING);
             return res;
         });
 
         Request req;
-        auto    res = co_await s2.Send(req, s1.Endpoint());
+        auto    res = co_await s2.Send(req, s1.GetEndpoint());
         EXPECT_TRUE(res.has_value()) << "must have response if send a message to online client";
 
         res = co_await s2.Send(req, offline_endpoint, 1s);

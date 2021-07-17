@@ -5,7 +5,6 @@
 
 #include <array>
 #include <bitset>
-#include <random>
 
 namespace Misaka::Kademlia {
 
@@ -17,7 +16,6 @@ using ID = std::bitset<IDsize>;
 template <typename T>
 class RouteTable {
 public:
-    RouteTable() : m_ID(random_bitset<IDsize>()) {}
     RouteTable(ID id) : m_ID(id) {}
 
     auto GetID() const noexcept { return m_ID; }

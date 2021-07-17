@@ -18,7 +18,7 @@ UdpServer::UdpServer(
     asio::io_context& io_context,
     std::string_view  address,
     uint16_t          port)
-    : m_Socket(io_context, asio::ip::udp::endpoint(asio::ip::make_address(address), port)),
+    : m_Socket(io_context, Endpoint(asio::ip::make_address(address), port)),
       m_Carrier(io_context),
       m_Logger(spdlog::stderr_color_st(std::format("UDP Server {}:{}", address, port))) {
 #if defined(_DEBUG)
@@ -30,7 +30,7 @@ UdpServer::UdpServer(
 asio::awaitable<void> UdpServer::Listen() {
     m_Logger->info("start listening.");
     try {
-        asio::ip::udp::endpoint remote;
+        Endpoint remote;
         while (true) {
             size_t n = co_await m_Socket.async_receive_from(
                 asio::buffer(m_ReciveBuffer.data(), m_ReciveBuffer.size()),
@@ -45,9 +45,9 @@ asio::awaitable<void> UdpServer::Listen() {
     }
 }
 
-asio::awaitable<std::optional<Response>> UdpServer::Send(Request                        request,
-                                                         const asio::ip::udp::endpoint& remote,
-                                                         std::chrono::seconds           timeout) {
+asio::awaitable<std::optional<Response>> UdpServer::Send(Request              request,
+                                                         const Endpoint&      remote,
+                                                         std::chrono::seconds timeout) {
     auto message = GenerateMessage(std::move(request));
     auto buffer  = message.SerializeAsString();
     try {
@@ -75,19 +75,19 @@ KademliaMessage UdpServer::GenerateMessage(std::variant<Request, Response> paylo
     (*message.mutable_time()) = google::protobuf::util::TimeUtil::GetCurrentTime();
 
     std::visit(overloaded{
-                   [&](Request& arg) {
+                   [&](Request&& arg) {
                        (*message.mutable_request()) = std::move(arg);
                    },
-                   [&](Response& arg) {
+                   [&](Response&& arg) {
                        (*message.mutable_response()) = std::move(arg);
                    },
                },
-               payload);
+               std::move(payload));
 
     return message;
 }
 
-asio::awaitable<void> UdpServer::ProcessMessage(uint8_t* data, size_t n, const asio::ip::udp::endpoint& remote) {
+asio::awaitable<void> UdpServer::ProcessMessage(uint8_t* data, size_t n, const Endpoint& remote) {
     KademliaMessage message;
     if (!message.ParseFromArray(data, n)) {
         m_Logger->warn("The data form {}:{} can not be parse, and it will be discard!",
