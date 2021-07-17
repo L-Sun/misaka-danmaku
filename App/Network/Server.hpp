@@ -1,6 +1,5 @@
 #pragma once
 #include "kademlia.pb.h"
-#include "RouteTable.hpp"
 #include "Carrier.hpp"
 
 #include <asio/awaitable.hpp>
@@ -14,7 +13,7 @@
 #include <unordered_map>
 #include <chrono>
 
-namespace Misaka {
+namespace Misaka::Network {
 
 class UdpServer {
 public:

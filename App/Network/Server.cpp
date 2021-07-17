@@ -12,7 +12,7 @@
 template <class... Ts>
 struct overloaded : Ts... { using Ts::operator()...; };
 
-namespace Misaka {
+namespace Misaka::Network {
 
 UdpServer::UdpServer(
     asio::io_context& io_context,
@@ -116,4 +116,4 @@ asio::awaitable<void> UdpServer::ProcessMessage(uint8_t* data, size_t n, const a
     }
 }
 
-}  // namespace Misaka
+}  // namespace Misaka::Network

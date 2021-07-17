@@ -7,7 +7,7 @@
 
 #include <list>
 
-using namespace Misaka;
+using namespace Misaka::Network;
 using namespace std::chrono_literals;
 
 class ServerTest : public ::testing::Test {
@@ -19,7 +19,7 @@ protected:
         io_context.run();
     }
 
-    Misaka::UdpServer& create_server_for_test() {
+    UdpServer& create_server_for_test() {
         thread_local uint16_t port   = 4000;
         auto&                 server = servers.emplace_back(io_context, "127.0.0.1", port++);
         asio::co_spawn(io_context, server.Listen(), asio::detached);
@@ -36,9 +36,9 @@ protected:
             asio::detached);
     }
 
-    asio::ip::udp::endpoint      offline_endpoint;
-    asio::io_context             io_context;
-    std::list<Misaka::UdpServer> servers;
+    asio::ip::udp::endpoint offline_endpoint;
+    asio::io_context        io_context;
+    std::list<UdpServer>    servers;
 };
 
 TEST_F(ServerTest, MessageTest) {
