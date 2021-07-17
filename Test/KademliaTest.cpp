@@ -6,6 +6,12 @@
 
 using namespace Misaka::Kademlia;
 
+auto create_id(const char (&str)[200]) {
+    std::string result(str);
+    result.erase(std::remove(result.begin(), result.end(), '\''), result.end());
+    return ID(result, 0, result.size(), '_', '*');
+}
+
 TEST(IDTest, RandomID) {
     std::unordered_set<ID> ids;
     for (size_t i = 0; i < 1000; i++) {
@@ -26,6 +32,14 @@ TEST(DistanceTest, DifferentID) {
 
     id1 = 0b01001011;
     id2 = 0b01001010;
+    ASSERT_EQ(cpl(id1, id2), 7);
+
+    id1 = 0b11001011;
+    id2 = 0b01001010;
+    ASSERT_EQ(cpl(id1, id2), 0);
+
+    id1 = decltype(id1){"00000000"};
+    id2 = decltype(id1){"00000001"};
     ASSERT_EQ(cpl(id1, id2), 7);
 }
 
@@ -95,6 +109,46 @@ TEST(TableTest, Add) {
     table.Add(id, 32);
     EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
     EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 32);
+}
+
+TEST(TableTest, AddSameID) {
+    RouteTable<int> table;
+    auto            id = random_bitset<IDsize>();
+    table.Add(id, 32);
+    EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
+    EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 32);
+
+    table.Add(id, 31);
+    EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
+    EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 31);
+}
+
+TEST(TableTest, GetBucket) {
+    RouteTable<int> table(0);
+    EXPECT_THROW(table.GetBuckets(0).Size(), std::out_of_range) << "itself can not exsist in its buckets";
+
+    auto peer1 = create_id(
+        "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'___*");
+    auto peer2 = create_id(
+        "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'__*_");
+    table.Add(peer1, 1);
+    table.Add(peer2, 2);
+    table.Add(peer2, 2);
+    EXPECT_EQ(table.GetBuckets(peer1).Size(), 1);
+    EXPECT_EQ(table.GetBuckets(peer2).Size(), 1);
+
+    auto peer3 = create_id(
+        "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'__**");
+    table.Add(peer3, 3);
+    EXPECT_EQ(table.GetBuckets(peer3).Size(), 2);
+
+    ID id = 0;
+    for (size_t i = 0; i < BucketSize + 10; i++) {
+        id.set(IDsize - 1 - i, true);
+        table.Add(id, i);
+    }
+
+    EXPECT_EQ(table.GetBuckets(id).Size(), BucketSize);
 }
 
 int main(int argc, char** argv) {

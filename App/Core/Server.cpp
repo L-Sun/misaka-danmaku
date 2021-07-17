@@ -15,10 +15,12 @@ struct overloaded : Ts... { using Ts::operator()...; };
 namespace Misaka {
 
 UdpServer::UdpServer(
+    Kademlia::ID      id,
     asio::io_context& io_context,
     std::string_view  address,
     uint16_t          port)
-    : m_Socket(io_context, asio::ip::udp::endpoint(asio::ip::make_address(address), port)),
+    : m_RouteTable(id),
+      m_Socket(io_context, asio::ip::udp::endpoint(asio::ip::make_address(address), port)),
       m_Carrier(io_context),
       m_Logger(spdlog::stderr_color_st(std::format("UDP Server {}:{}", address, port))) {
 #if defined(_DEBUG)

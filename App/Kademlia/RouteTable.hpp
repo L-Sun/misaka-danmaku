@@ -1,7 +1,7 @@
 #pragma once
 #include "LRUCache.hpp"
 
-#include <utils.hpp>
+#include "utils.hpp"
 
 #include <array>
 #include <bitset>
@@ -18,6 +18,7 @@ template <typename T>
 class RouteTable {
 public:
     RouteTable() : m_ID(random_bitset<IDsize>()) {}
+    RouteTable(ID id) : m_ID(id) {}
 
     auto GetID() const noexcept { return m_ID; }
 

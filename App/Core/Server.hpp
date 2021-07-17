@@ -18,14 +18,11 @@ namespace Misaka {
 
 class UdpServer {
 public:
-    UdpServer(asio::io_context& io_context,
-              std::string_view  address = "127.0.0.1",
-              uint16_t          port    = 8000);
-
-    UdpServer(const UdpServer&) = delete;
-    UdpServer& operator=(const UdpServer&) = delete;
-    UdpServer(UdpServer&&)                 = delete;
-    UdpServer& operator=(UdpServer&&) = delete;
+    UdpServer(
+        Kademlia::ID      id,
+        asio::io_context& io_context,
+        std::string_view  address = "127.0.0.1",
+        uint16_t          port    = 8000);
 
     // Bind endpoint to udp server
     void Bind(std::string_view address, uint16_t port);

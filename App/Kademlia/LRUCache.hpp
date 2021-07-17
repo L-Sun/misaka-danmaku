@@ -5,18 +5,21 @@
 
 namespace Misaka::Kademlia {
 
-template <typename Key, typename Value, size_t Size>
+template <typename Key, typename Value, size_t Capacity>
 class LRUCache {
     using Node = typename std::pair<Key, Value>;
     using Iter = typename std::list<Node>::iterator;
 
 public:
     LRUCache() = default;
-    // Can not use default copy or assignment constructor because
-    // the iter of copy instance is point to node of origin item.
-    // For simplicity, the both function are marked `delete`
-    LRUCache(const LRUCache&) = delete;
-    LRUCache& operator=(const LRUCache&) = delete;
+    LRUCache(const LRUCache& rhs) : m_Cache(rhs.m_Cache) {
+        ReMap();
+    }
+    LRUCache& operator=(const LRUCache& rhs) {
+        m_Cache = rhs.m_Cache;
+        ReMap();
+        return *this;
+    };
 
     void Add(Key key, Value val) {
         if (m_Map.count(key) != 0) {
@@ -37,7 +40,9 @@ public:
         return m_Cache.front().second;
     }
 
-    bool Full() const noexcept { return m_Map.size() == Size; }
+    bool Full() const noexcept { return m_Map.size() == Capacity; }
+
+    size_t Size() const noexcept { return m_Cache.size(); }
 
     auto begin() const noexcept { return m_Cache.cbegin(); }
     auto end() const noexcept { return m_Cache.cend(); }
@@ -49,6 +54,12 @@ private:
     void RemoveLeastRecently() {
         m_Map.erase(m_Cache.back().first);
         m_Cache.pop_back();
+    }
+    void ReMap() {
+        m_Map.clear();
+        for (auto iter = m_Cache.begin(); iter != m_Cache.end(); iter++) {
+            m_Map.emplace(iter->first, iter);
+        }
     }
 
     // 1 <-> 2 <-> 3 <-> 4
