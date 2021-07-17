@@ -10,8 +10,6 @@ message KademliaMessage {
         Request  request  = 1;
         Response response = 2;
     }
-    // the creator of this message
-    bytes originID = 3;
     // the id of this message
     uint64 messageID = 4;
     // the time of this message created

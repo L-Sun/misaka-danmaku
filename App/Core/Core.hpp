@@ -9,7 +9,7 @@
 namespace Misaka {
 class Core {
 public:
-    Core(Kademlia::ID id);
+    Core();
 
     void ConnectToNetwork(std::string_view host);
     void PublishDamaku(std::string damaku);
@@ -17,7 +17,6 @@ public:
 private:
     Kademlia::ID     m_ID;
     asio::io_context m_IOContext;
-    UdpServer        m_Server;
 
     std::shared_ptr<spdlog::logger> m_Logger;
 };

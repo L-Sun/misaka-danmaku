@@ -1,11 +1,12 @@
 syntax = "proto3";
 
 message Response {
+    bytes originID = 1;
     oneof response {
-        PingResponse      ping      = 1;
-        StoreResponse     store     = 2;
-        FindNodeResponse  findNode  = 3;
-        FindValueResponse findValue = 4;
+        PingResponse      ping      = 2;
+        StoreResponse     store     = 3;
+        FindNodeResponse  findNode  = 4;
+        FindValueResponse findValue = 5;
     }
 }
 

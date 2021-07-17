@@ -18,28 +18,24 @@ namespace Misaka {
 
 class UdpServer {
 public:
-    UdpServer(
-        Kademlia::ID      id,
-        asio::io_context& io_context,
-        std::string_view  address = "127.0.0.1",
-        uint16_t          port    = 8000);
+    UdpServer(asio::io_context& io_context, std::string_view address, uint16_t port);
 
     // Bind endpoint to udp server
     void Bind(std::string_view address, uint16_t port);
 
     inline auto Endpoint() const noexcept { return m_Socket.local_endpoint(); }
 
-    inline auto& RouteTable() noexcept { return m_RouteTable; }
-
     // Set request processor
-    inline void SetRequestProcessor(std::function<Response(const Request&)> processor) noexcept {
+    inline void SetRequestProcessor(
+        std::function<Response(Request req, asio::ip::udp::endpoint remote)> processor) noexcept {
         m_RequestProcessor = processor;
     }
 
-    asio::awaitable<void>                    Listen();
-    asio::awaitable<std::optional<Response>> Send(Request              request,
-                                                  const Kademlia::ID&  remote,
-                                                  std::chrono::seconds timeout = std::chrono::seconds(30));
+    asio::awaitable<void> Listen();
+
+    asio::awaitable<std::optional<Response>> Send(Request                        request,
+                                                  const asio::ip::udp::endpoint& remote,
+                                                  std::chrono::seconds           timeout = std::chrono::seconds(30));
 
 private:
     asio::awaitable<void> ProcessMessage(uint8_t* data, size_t n, const asio::ip::udp::endpoint& remote);
@@ -52,11 +48,8 @@ private:
     std::array<uint8_t, 8192> m_ReciveBuffer;
     Carrier<Response>         m_Carrier;
 
-    // route table
-    Kademlia::RouteTable<asio::ip::udp::endpoint> m_RouteTable;
-
-    std::function<Response(const Request&)> m_RequestProcessor;
-    std::shared_ptr<spdlog::logger>         m_Logger;
+    std::function<Response(Request, asio::ip::udp::endpoint)> m_RequestProcessor;
+    std::shared_ptr<spdlog::logger>                           m_Logger;
 };
 
 }  // namespace Misaka
