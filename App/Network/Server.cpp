@@ -57,7 +57,7 @@ asio::awaitable<std::optional<Response>> UdpServer::Send(Request              re
 
         co_await m_Socket.async_send_to(asio::buffer(buffer), remote, asio::use_awaitable);
     } catch (const std::exception& e) {
-        m_Logger->error(e.what());
+        m_Logger->error("{} remote:{}:{}", e.what(), remote.address().to_string(), remote.port());
     }
     uint64_t message_id = message.messageid();
     auto     response   = co_await m_Carrier.Get(message_id, timeout);
