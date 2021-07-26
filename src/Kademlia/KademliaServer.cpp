@@ -11,10 +11,10 @@ namespace Misaka::Kademlia {
 
 using namespace std::chrono_literals;
 
-KademliaEngine::KademliaEngine(ID id, asio::io_context& io_context, std::string_view address, uint16_t port)
-    : m_RouteTable(id),
+KademliaEngine::KademliaEngine(asio::io_context& io_context, std::string_view address, uint16_t port)
+    : m_RouteTable(random_bitset<IDsize>()),
       m_Server(io_context, address, port),
-      m_Logger(spdlog::stdout_color_st(std::format("KademliaEngine[{} {}:{}]", id.to_string(), address, port))) {
+      m_Logger(spdlog::stdout_color_st(std::format("KademliaEngine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
     m_Server.SetRequestProcessor(
         [&](Request req, Network::Endpoint remote) -> Response {
             // TODO black list may be used in here for those abused requests

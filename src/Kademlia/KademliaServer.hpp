@@ -7,7 +7,7 @@
 namespace Misaka::Kademlia {
 class KademliaEngine {
 public:
-    KademliaEngine(ID id, asio::io_context& io_context, std::string_view address, uint16_t port);
+    KademliaEngine(asio::io_context& io_context, std::string_view address, uint16_t port);
 
     asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
 

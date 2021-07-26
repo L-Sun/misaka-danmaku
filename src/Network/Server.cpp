@@ -29,19 +29,19 @@ UdpServer::UdpServer(
 
 asio::awaitable<void> UdpServer::Listen() {
     m_Logger->info("start listening.");
-    try {
-        Endpoint remote;
-        while (true) {
-            size_t n = co_await m_Socket.async_receive_from(
+    while (true) {
+        try {
+            Endpoint remote;
+            size_t   n = co_await m_Socket.async_receive_from(
                 asio::buffer(m_ReciveBuffer.data(), m_ReciveBuffer.size()),
                 remote,
                 asio::use_awaitable);
 
             m_Logger->debug("get a message from {}:{}", remote.address().to_string(), remote.port());
             co_await ProcessMessage(m_ReciveBuffer.data(), n, remote);
+        } catch (std::exception e) {
+            m_Logger->error(e.what());
         }
-    } catch (std::exception e) {
-        m_Logger->error(e.what());
     }
 }
 

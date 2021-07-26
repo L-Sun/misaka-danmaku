@@ -157,7 +157,7 @@ protected:
     constexpr static size_t num_clients = 2;
     KademliaTest()
         : io_context(1),
-          seedServer(5000, io_context, "127.0.0.1", 5000),
+          seedServer(io_context, "127.0.0.1", 5000),
           clients{create_clients<num_clients>(io_context, 4000)} {
         /* Init here */
     }
@@ -173,7 +173,7 @@ private:
     template <size_t N>
     static auto create_clients(asio::io_context& io_context, uint16_t portBase) {
         constexpr auto impl = []<size_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
-            return std::array{KademliaEngine(I, io_context, "127.0.0.1", portBase + I)...};
+            return std::array{KademliaEngine(io_context, "127.0.0.1", portBase + I)...};
         };
         return impl(io_context, portBase, std::make_index_sequence<N>{});
     }
@@ -183,9 +183,6 @@ TEST_F(KademliaTest, ConnectNetwork) {
     co_test(io_context, [&]() -> asio::awaitable<void> {
         EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 5000)) << "it should be successful to connect to network.";
         EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 5001)) << "it should be failed to connect unexsist network.";
-
-        KademliaEngine conflict_client(0, io_context, "127.0.0.1", 5002);
-        EXPECT_FALSE(co_await conflict_client.ConnectToNetwork("127.0.0.1", 5000)) << "it can not connect to network because of a other same id online.";
     });
 }
 
