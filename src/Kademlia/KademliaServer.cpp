@@ -16,22 +16,22 @@ KademliaEngine::KademliaEngine(asio::io_context& io_context, std::string_view ad
       m_Server(io_context, address, port),
       m_Logger(spdlog::stdout_color_st(std::format("KademliaEngine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
     m_Server.SetRequestProcessor(
-        [&](Request req, Network::Endpoint remote) -> Response {
+        [&](Request request, Network::Endpoint remote) -> Response {
             // TODO black list may be used in here for those abused requests
 
-            m_RouteTable.Add(ID(req.originid()), remote);
+            m_RouteTable.Add(ID(request.originid()), remote);
 
-            switch (req.request_case()) {
+            switch (request.request_case()) {
                 case Request::RequestCase::kPing:
-                    return WrapResponse(HandlePingRequest(req.ping()));
+                    return WrapResponse(HandlePingRequest(request.ping()));
                 /* 
                  TODO uncomment after impletement this member function
                 case Request::RequestCase::kStore:
-                    return WrapResponse(HandleStoreRequest(req.store()));
+                    return WrapResponse(HandleStoreRequest(request.store()));
                 case Request::RequestCase::kFindNode:
-                    return WrapResponse(HandleFindNodeRequest(req.findnode()));
+                    return WrapResponse(HandleFindNodeRequest(request.findnode()));
                 case Request::RequestCase::kFindValue:
-                    return WrapResponse(HandleFindValueRequest(req.findvalue()));
+                    return WrapResponse(HandleFindValueRequest(request.findvalue()));
                 */
                 default:
                     m_Logger->warn("unkown request case, return default response");
@@ -63,13 +63,31 @@ asio::awaitable<bool> KademliaEngine::ConnectToNetwork(std::string_view address,
 
     m_RouteTable.Add(ID(response->originid()), remote);
 
-    // TODO call FindNode to find myself, and then populate the route table
     co_return true;
 }
 
-PingResponse KademliaEngine::HandlePingRequest(const PingRequest& req) {
+// TODO call FindNode to find myself, and then populate the route table
+void KademliaEngine::FindMe() {
+     
+}
+
+
+PingResponse KademliaEngine::HandlePingRequest(const PingRequest& request) {
     PingResponse result;
     result.set_state(PingResponse_State::PingResponse_State_RUNNING);
+    return result;
+}
+
+FindNodeResponse KademliaEngine::HandleFindNodeRequest(const FindNodeRequest& request) {
+    FindNodeResponse result;
+
+    for (auto&& [id, endpoint] : m_RouteTable.GetBucket(ID(request.id()))) {
+        auto node = result.add_nodes();
+        node->set_id(id.to_string());
+        node->set_address(endpoint.address().to_string());
+        node->set_port(endpoint.port());
+    }
+
     return result;
 }
 

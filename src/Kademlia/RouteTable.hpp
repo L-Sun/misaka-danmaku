@@ -25,7 +25,7 @@ public:
         m_Buckets.at(dis).Add(id, val);
     }
 
-    auto& GetBuckets(const ID& id) {
+    auto& GetBucket(const ID& id) {
         auto dis = cpl(m_ID, id);
         return m_Buckets.at(dis);
     }

@@ -108,25 +108,25 @@ TEST(TableTest, Add) {
     RouteTable<int> table(random_bitset<IDsize>());
     auto            id = random_bitset<IDsize>();
     table.Add(id, 32);
-    EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
-    EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 32);
+    EXPECT_TRUE(table.GetBucket(id).Get(id).has_value());
+    EXPECT_EQ(table.GetBucket(id).Get(id).value(), 32);
 }
 
 TEST(TableTest, AddSameID) {
     RouteTable<int> table(random_bitset<IDsize>());
     auto            id = random_bitset<IDsize>();
     table.Add(id, 32);
-    EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
-    EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 32);
+    EXPECT_TRUE(table.GetBucket(id).Get(id).has_value());
+    EXPECT_EQ(table.GetBucket(id).Get(id).value(), 32);
 
     table.Add(id, 31);
-    EXPECT_TRUE(table.GetBuckets(id).Get(id).has_value());
-    EXPECT_EQ(table.GetBuckets(id).Get(id).value(), 31);
+    EXPECT_TRUE(table.GetBucket(id).Get(id).has_value());
+    EXPECT_EQ(table.GetBucket(id).Get(id).value(), 31);
 }
 
 TEST(TableTest, GetBucket) {
     RouteTable<int> table(0);
-    EXPECT_THROW(table.GetBuckets(0).Size(), std::out_of_range) << "itself can not exsist in its buckets";
+    EXPECT_THROW(table.GetBucket(0).Size(), std::out_of_range) << "itself can not exsist in its buckets";
 
     auto peer1 = create_id(
         "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'___*");
@@ -135,13 +135,13 @@ TEST(TableTest, GetBucket) {
     table.Add(peer1, 1);
     table.Add(peer2, 2);
     table.Add(peer2, 2);
-    EXPECT_EQ(table.GetBuckets(peer1).Size(), 1);
-    EXPECT_EQ(table.GetBuckets(peer2).Size(), 1);
+    EXPECT_EQ(table.GetBucket(peer1).Size(), 1);
+    EXPECT_EQ(table.GetBucket(peer2).Size(), 1);
 
     auto peer3 = create_id(
         "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'__**");
     table.Add(peer3, 3);
-    EXPECT_EQ(table.GetBuckets(peer3).Size(), 2);
+    EXPECT_EQ(table.GetBucket(peer3).Size(), 2);
 
     ID id = 0;
     for (size_t i = 0; i < BucketSize + 10; i++) {
@@ -149,7 +149,7 @@ TEST(TableTest, GetBucket) {
         table.Add(id, i);
     }
 
-    EXPECT_EQ(table.GetBuckets(id).Size(), BucketSize);
+    EXPECT_EQ(table.GetBucket(id).Size(), BucketSize);
 }
 
 class KademliaTest : public ::testing::Test {

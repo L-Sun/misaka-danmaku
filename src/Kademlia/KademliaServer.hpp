@@ -12,10 +12,12 @@ public:
     asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
 
 private:
-    PingResponse      HandlePingRequest(const PingRequest& req);
-    StoreResponse     HandleStoreRequest(const StoreRequest& req);
-    FindNodeResponse  HandleFindNodeRequest(const FindNodeRequest& req);
-    FindValueResponse HandleFindValueRequest(const FindValueRequest& req);
+    void FindMe();
+
+    PingResponse      HandlePingRequest(const PingRequest& request);
+    StoreResponse     HandleStoreRequest(const StoreRequest& request);
+    FindNodeResponse  HandleFindNodeRequest(const FindNodeRequest& request);
+    FindValueResponse HandleFindValueRequest(const FindValueRequest& request);
 
     Request  WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequest, FindValueRequest> request);
     Response WrapResponse(std::variant<PingResponse, StoreResponse, FindNodeResponse, FindValueResponse> response);
