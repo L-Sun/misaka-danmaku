@@ -181,11 +181,11 @@ private:
 
 TEST_F(KademliaTest, ConnectNetwork) {
     co_test(io_context, [&]() -> asio::awaitable<void> {
-        EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 5000)) << "it should be successful to connect to network";
-        EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 5001)) << "it should be failed to connect unexsist network";
+        EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 5000)) << "it should be successful to connect to network.";
+        EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 5001)) << "it should be failed to connect unexsist network.";
 
         KademliaEngine conflict_client(0, io_context, "127.0.0.1", 5002);
-        EXPECT_FALSE(co_await conflict_client.ConnectToNetwork("127.0.0.1", 5000)) << ;
+        EXPECT_FALSE(co_await conflict_client.ConnectToNetwork("127.0.0.1", 5000)) << "it can not connect to network because of a other same id online.";
     });
 }
 
