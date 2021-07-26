@@ -126,7 +126,7 @@ TEST(TableTest, AddSameID) {
 
 TEST(TableTest, GetBucket) {
     RouteTable<int> table(0);
-    EXPECT_THROW(table.GetBucket(0).Size(), std::out_of_range) << "itself can not exsist in its buckets";
+    EXPECT_EQ(table.GetBucket(0).Size(), 0);
 
     auto peer1 = create_id(
         "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'___*");
@@ -135,13 +135,13 @@ TEST(TableTest, GetBucket) {
     table.Add(peer1, 1);
     table.Add(peer2, 2);
     table.Add(peer2, 2);
-    EXPECT_EQ(table.GetBucket(peer1).Size(), 1);
-    EXPECT_EQ(table.GetBucket(peer2).Size(), 1);
+    EXPECT_EQ(table.GetBucket(peer1).Size(), 2);
+    EXPECT_EQ(table.GetBucket(peer2).Size(), 2);
 
     auto peer3 = create_id(
         "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'__**");
     table.Add(peer3, 3);
-    EXPECT_EQ(table.GetBucket(peer3).Size(), 2);
+    EXPECT_EQ(table.GetBucket(peer3).Size(), 3);
 
     ID id = 0;
     for (size_t i = 0; i < BucketSize + 10; i++) {
@@ -149,7 +149,13 @@ TEST(TableTest, GetBucket) {
         table.Add(id, i);
     }
 
-    EXPECT_EQ(table.GetBucket(id).Size(), BucketSize);
+    EXPECT_EQ(table.GetBucket(id).Size(), BucketSize) << "should split to two bucket(right tree 20 nodes, left tree 3 nodes)";
+    EXPECT_EQ(table.GetBucket(0).Size(), 3) << "should split to two bucket(right tree 20 nodes, left tree 3 nodes)";
+
+    auto peer4 = create_id(
+        "____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'____'_*__");
+    table.Add(peer4, 4);
+    EXPECT_EQ(table.GetBucket(peer3).Size(), 4) << "should contain 4 nodes beacause of it exsist in right tree";
 }
 
 class KademliaTest : public ::testing::Test {

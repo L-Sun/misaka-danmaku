@@ -33,6 +33,14 @@ public:
         }
     }
 
+    Value Remove(Key key) {
+        Iter  iter   = m_Map.at(key);
+        Value result = std::move(iter->second);
+        m_Cache.erase(iter);
+        m_Map.erase(key);
+        return result;
+    }
+
     std::optional<const std::reference_wrapper<Value>> Get(const Key& key) {
         if (m_Map.count(key) == 0) return std::nullopt;
 
