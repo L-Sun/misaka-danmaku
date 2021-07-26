@@ -157,7 +157,7 @@ protected:
     constexpr static size_t num_clients = 2;
     KademliaTest()
         : io_context(1),
-          seedServer(10086, io_context, "127.0.0.1", 10086),
+          seedServer(5000, io_context, "127.0.0.1", 5000),
           clients{create_clients<num_clients>(io_context, 4000)} {
         /* Init here */
     }
@@ -181,8 +181,11 @@ private:
 
 TEST_F(KademliaTest, ConnectNetwork) {
     co_test(io_context, [&]() -> asio::awaitable<void> {
-        EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 10086)) << "it should be successful to connect to network";
-        EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 10087)) << "it should be failed to connect unexsist network";
+        EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 5000)) << "it should be successful to connect to network";
+        EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 5001)) << "it should be failed to connect unexsist network";
+
+        KademliaEngine conflict_client(0, io_context, "127.0.0.1", 5002);
+        EXPECT_FALSE(co_await conflict_client.ConnectToNetwork("127.0.0.1", 5000)) << ;
     });
 }
 

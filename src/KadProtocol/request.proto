@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+message Request {
+    bytes originID = 1;
+    oneof request {
+        PingRequest      ping      = 2;
+        StoreRequest     store     = 3;
+        FindNodeRequest  findNode  = 4;
+        FindValueRequest findValue = 5;
+    }
+}
+
+message PingRequest {
+    int32 _placeholder = 1;
+}
+
+message StoreRequest {
+    bytes  key   = 1;
+    string value = 2;
+}
+
+message FindNodeRequest {
+    bytes id = 1;
+}
+
+message FindValueRequest {
+    bytes key = 1;
+}

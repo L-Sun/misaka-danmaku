@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+message Response {
+    bytes originID = 1;
+    oneof response {
+        PingResponse      ping      = 2;
+        StoreResponse     store     = 3;
+        FindNodeResponse  findNode  = 4;
+        FindValueResponse findValue = 5;
+    }
+}
+
+message PingResponse {
+    enum State {
+        RUNNING = 0;
+        BUSY    = 1;
+        REJECT  = 2;
+    }
+    State state = 1;
+}
+
+message StoreResponse {
+    enum State {
+        SUCCESS = 0;
+        FAILED  = 1;
+    }
+    State state = 1;
+}
+
+message FindNodeResponse {
+    message NodeInfo {
+        bytes  id      = 1;
+        bytes  address = 2;
+        uint32 port    = 3;
+    }
+    repeated NodeInfo nodes = 1;
+}
+
+message FindValueResponse {
+    message Data {
+        bytes key   = 1;
+        bytes value = 2;
+    }
+
+    repeated Data data = 1;
+}

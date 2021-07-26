@@ -10,8 +10,7 @@ find_package(GTest CONFIG REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
-add_subdirectory(KadProtocol)
-add_subdirectory(App)
+add_subdirectory(src)
 add_subdirectory(Test)
 
 add_executable(echo_server server.cpp)
