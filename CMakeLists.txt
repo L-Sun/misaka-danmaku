@@ -1,7 +1,12 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21.0)
 project(MisakaDanmaku VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 20)
+if(MSVC)
+    add_compile_options(/std:c++latest)
+else()
+    add_compile_options(-std=c++20)
+endif()
+
 include(CTest)
 enable_testing()
 

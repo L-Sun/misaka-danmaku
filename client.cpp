@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <iostream>
+#include <format>
 
 auto make_endpoint_from_string(std::string_view s) {
     auto colon_pos = s.find(':');
