@@ -3,6 +3,7 @@ project(MisakaDanmaku VERSION 0.1.0)
 
 if(MSVC)
     add_compile_options(/std:c++latest)
+    add_compile_definitions(_WIN32_WINNT=_WIN32_WINNT_WIN10)
 else()
     add_compile_options(-std=c++20)
 endif()
