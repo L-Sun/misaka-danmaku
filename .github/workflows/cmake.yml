@@ -14,13 +14,18 @@ env:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    env:
+      CXX: ${{ matrix.compiler }}
 
     strategy:
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, ubuntu-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
+          - os: ubuntu-latest
+            triplet: x64-linux
+            compiler: g++
       fail-fast: true
 
     steps:
@@ -46,9 +51,6 @@ jobs:
           vcpkgGitCommitId: "210240b399fbc2f1363f4103b6a93629c207d7e3"
           # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed' directory.
           additionalCachedPaths: ${{ env.CMAKE_BUILD_DIR }}/vcpkg_installed
-
-      - name: workround with https://github.com/microsoft/vcpkg/issues/19552
-        run: mkdir vcpkg_installed\x64-windows\tools
 
       - name: Run CMake to install the dependencies specified in the vcpkg.json manifest, generate project file and build the project
         uses: lukka/run-cmake@v3
