@@ -177,7 +177,7 @@ protected:
 
 private:
     template <size_t N>
-    static auto create_clients(asio::io_context& io_context, uint16_t portBase) {
+    static std::array<KademliaEngine, N> create_clients(asio::io_context& io_context, uint16_t portBase) {
         constexpr auto impl = []<size_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
             return std::array{KademliaEngine(io_context, "127.0.0.1", portBase + I)...};
         };
