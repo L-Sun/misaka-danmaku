@@ -3,6 +3,7 @@
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <fmt/format.h>
 
 template <class... Ts>
 struct overloaded : Ts... { using Ts::operator()...; };
@@ -14,7 +15,7 @@ using namespace std::chrono_literals;
 KademliaEngine::KademliaEngine(asio::io_context& io_context, std::string_view address, uint16_t port)
     : m_RouteTable(random_bitset<IDsize>()),
       m_Server(io_context, address, port),
-      m_Logger(spdlog::stdout_color_st(std::format("KademliaEngine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
+      m_Logger(spdlog::stdout_color_st(fmt::format("KademliaEngine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
     m_Server.SetRequestProcessor(
         [&](Request request, Network::Endpoint remote) -> Response {
             // TODO black list may be used in here for those abused requests
@@ -68,9 +69,7 @@ asio::awaitable<bool> KademliaEngine::ConnectToNetwork(std::string_view address,
 
 // TODO call FindNode to find myself, and then populate the route table
 void KademliaEngine::FindMe() {
-     
 }
-
 
 PingResponse KademliaEngine::HandlePingRequest(const PingRequest& request) {
     PingResponse result;

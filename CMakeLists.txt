@@ -15,15 +15,7 @@ find_package(asio CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 add_subdirectory(src)
 add_subdirectory(Test)
-
-add_executable(echo_server server.cpp)
-target_link_libraries(echo_server PRIVATE asio)
-
-add_executable(client client.cpp)
-target_link_libraries(client PRIVATE asio)
-
-add_executable(playground playground.cpp)
-target_link_libraries(playground PRIVATE asio spdlog::spdlog)
