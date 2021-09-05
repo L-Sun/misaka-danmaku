@@ -21,10 +21,6 @@ jobs:
         include:
           - os: windows-latest
             triplet: x64-windows
-          - os: ubuntu-latest
-            triplet: x64-linux
-          - os: macos-latest
-            triplet: x64-osx
       fail-fast: true
 
     steps:
