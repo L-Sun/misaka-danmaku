@@ -52,6 +52,9 @@ jobs:
           # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed' directory.
           additionalCachedPaths: ${{ env.CMAKE_BUILD_DIR }}/vcpkg_installed
 
+      - name: workround with https://github.com/microsoft/vcpkg/issues/19552
+        run: mkdir vcpkg_installed\x64-windows\tools
+
       - name: Run CMake to install the dependencies specified in the vcpkg.json manifest, generate project file and build the project
         uses: lukka/run-cmake@v3
         with:
