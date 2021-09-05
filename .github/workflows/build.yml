@@ -34,7 +34,7 @@ jobs:
           submodules: true
 
       - name: Install compiler
-        if: startsWith(matrix.runs-on, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt-get install -y ${{ matrix.compiler }}
 
       # Install latest CMake.
