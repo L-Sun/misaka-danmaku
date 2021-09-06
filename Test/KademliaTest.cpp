@@ -168,9 +168,8 @@ protected:
         /* Init here */
     }
 
-    ~KademliaTest() {
-        io_context.run();
-    }
+    ~KademliaTest() {}
+
     asio::io_context                        io_context;
     KademliaEngine                          seedServer;
     std::array<KademliaEngine, num_clients> clients;

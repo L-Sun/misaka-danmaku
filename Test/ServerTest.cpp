@@ -13,9 +13,6 @@ protected:
     ServerTest()
         : io_context(1),
           offline_endpoint(asio::ip::make_address("127.0.0.2"), 62312) {}
-    ~ServerTest() {
-        io_context.run();
-    }
 
     UdpServer& create_server_for_test() {
         thread_local uint16_t port   = 8000;
