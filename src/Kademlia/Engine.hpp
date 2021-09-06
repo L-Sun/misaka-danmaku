@@ -5,9 +5,9 @@
 #include <variant>
 
 namespace Misaka::Kademlia {
-class KademliaEngine {
+class Engine {
 public:
-    KademliaEngine(asio::io_context& io_context, std::string_view address, uint16_t port);
+    Engine(asio::io_context& io_context, std::string_view address, uint16_t port);
 
     asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
 

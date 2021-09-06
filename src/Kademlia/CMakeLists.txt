@@ -1,4 +1,4 @@
-add_library(Kademlia KademliaServer.cpp)
+add_library(Kademlia Engine.cpp)
 target_link_libraries(Kademlia PRIVATE Server asio::asio spdlog::spdlog fmt::fmt)
 target_include_directories(Kademlia
     INTERFACE

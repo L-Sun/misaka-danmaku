@@ -1,4 +1,4 @@
-#include "KademliaServer.hpp"
+#include "Engine.hpp"
 
 #include <asio/co_spawn.hpp>
 #include <asio/detached.hpp>
@@ -12,10 +12,10 @@ namespace Misaka::Kademlia {
 
 using namespace std::chrono_literals;
 
-KademliaEngine::KademliaEngine(asio::io_context& io_context, std::string_view address, uint16_t port)
+Engine::Engine(asio::io_context& io_context, std::string_view address, uint16_t port)
     : m_RouteTable(random_bitset<IDsize>()),
       m_Server(io_context, address, port),
-      m_Logger(spdlog::stdout_color_st(fmt::format("KademliaEngine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
+      m_Logger(spdlog::stdout_color_st(fmt::format("Engine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
     m_Server.SetRequestProcessor(
         [&](Request request, Network::Endpoint remote) -> Response {
             // TODO black list may be used in here for those abused requests
@@ -47,7 +47,7 @@ KademliaEngine::KademliaEngine(asio::io_context& io_context, std::string_view ad
         asio::detached);
 }
 
-asio::awaitable<bool> KademliaEngine::ConnectToNetwork(std::string_view address, uint16_t port) {
+asio::awaitable<bool> Engine::ConnectToNetwork(std::string_view address, uint16_t port) {
     Network::Endpoint remote(asio::ip::make_address(address), port);
 
     Request ping_request;
@@ -68,16 +68,16 @@ asio::awaitable<bool> KademliaEngine::ConnectToNetwork(std::string_view address,
 }
 
 // TODO call FindNode to find myself, and then populate the route table
-void KademliaEngine::FindMe() {
+void Engine::FindMe() {
 }
 
-PingResponse KademliaEngine::HandlePingRequest(const PingRequest& request) {
+PingResponse Engine::HandlePingRequest(const PingRequest& request) {
     PingResponse result;
     result.set_state(PingResponse_State::PingResponse_State_RUNNING);
     return result;
 }
 
-FindNodeResponse KademliaEngine::HandleFindNodeRequest(const FindNodeRequest& request) {
+FindNodeResponse Engine::HandleFindNodeRequest(const FindNodeRequest& request) {
     FindNodeResponse result;
 
     for (auto&& [id, endpoint] : m_RouteTable.GetBucket(ID(request.id()))) {
@@ -90,7 +90,7 @@ FindNodeResponse KademliaEngine::HandleFindNodeRequest(const FindNodeRequest& re
     return result;
 }
 
-Request KademliaEngine::WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequest, FindValueRequest> request) {
+Request Engine::WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequest, FindValueRequest> request) {
     Request result;
     result.set_originid(m_RouteTable.GetID().to_string());
     std::visit(overloaded{
@@ -111,7 +111,7 @@ Request KademliaEngine::WrapRequest(std::variant<PingRequest, StoreRequest, Find
     return result;
 }
 
-Response KademliaEngine::WrapResponse(std::variant<PingResponse, StoreResponse, FindNodeResponse, FindValueResponse> response) {
+Response Engine::WrapResponse(std::variant<PingResponse, StoreResponse, FindNodeResponse, FindValueResponse> response) {
     Response result;
     result.set_originid(m_RouteTable.GetID().to_string());
     std::visit(overloaded{

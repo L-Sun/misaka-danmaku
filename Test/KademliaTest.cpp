@@ -170,15 +170,15 @@ protected:
 
     ~KademliaTest() {}
 
-    asio::io_context                        io_context;
-    KademliaEngine                          seedServer;
-    std::array<KademliaEngine, num_clients> clients;
+    asio::io_context                io_context;
+    Engine                          seedServer;
+    std::array<Engine, num_clients> clients;
 
 private:
     template <size_t N>
-    static std::array<KademliaEngine, N> create_clients(asio::io_context& io_context, uint16_t portBase) {
+    static std::array<Engine, N> create_clients(asio::io_context& io_context, uint16_t portBase) {
         constexpr auto impl = []<size_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
-            return std::array{KademliaEngine(io_context, "127.0.0.1", portBase + I)...};
+            return std::array{Engine(io_context, "127.0.0.1", portBase + I)...};
         };
         return impl(io_context, portBase, std::make_index_sequence<N>{});
     }
