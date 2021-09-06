@@ -13,4 +13,5 @@ auto co_test(asio::io_context& io_context, F&& func) {
             io_context.stop();
         },
         asio::detached);
+    io_context.run();
 }
