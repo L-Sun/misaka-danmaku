@@ -1,4 +1,5 @@
 #include "Kademlia.hpp"
+#include "UdpServer.hpp"
 #include "TestUtils.hpp"
 
 #include <gtest/gtest.h>
@@ -160,25 +161,35 @@ TEST(TableTest, GetBucket) {
 
 class KademliaTest : public ::testing::Test {
 protected:
-    constexpr static size_t num_clients = 2;
+    constexpr static uint16_t num_clients = 2;
     KademliaTest()
         : io_context(1),
-          seedServer(io_context, "127.0.0.1", 5000),
+          seedServer(std::make_shared<Misaka::Network::UdpServer>(io_context, "127.0.0.1", 5000)),
           clients{create_clients<num_clients>(io_context, 4000)} {
-        /* Init here */
+        seedServer->SetRequestProcessor([](const Misaka::Network::Context& context) -> Response {
+            auto [request, remote] = context;
+            Response response;
+            if (request.has_ping()) {
+                response.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
+            }
+            return response;
+        });
+
+        seedServer->Listen();
     }
 
     ~KademliaTest() {}
 
-    asio::io_context                io_context;
-    Engine                          seedServer;
-    std::array<Engine, num_clients> clients;
+    asio::io_context                         io_context;
+    std::shared_ptr<Misaka::Network::Server> seedServer;
+    std::array<Engine, num_clients>          clients;
 
 private:
-    template <size_t N>
+    template <uint16_t N>
     static std::array<Engine, N> create_clients(asio::io_context& io_context, uint16_t portBase) {
-        constexpr auto impl = []<size_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
-            return std::array{Engine(io_context, "127.0.0.1", portBase + I)...};
+        constexpr auto impl = []<uint16_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
+            return std::array{
+                Engine(std::make_shared<Misaka::Network::UdpServer>(io_context, "127.0.0.1", portBase + I))...};
         };
         return impl(io_context, portBase, std::make_index_sequence<N>{});
     }

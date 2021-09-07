@@ -1,7 +1,5 @@
 #include "Engine.hpp"
 
-#include <asio/co_spawn.hpp>
-#include <asio/detached.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <fmt/format.h>
 
@@ -12,12 +10,13 @@ namespace Misaka::Kademlia {
 
 using namespace std::chrono_literals;
 
-Engine::Engine(asio::io_context& io_context, std::string_view address, uint16_t port)
+Engine::Engine(std::shared_ptr<Network::Server> server)
     : m_RouteTable(random_bitset<IDsize>()),
-      m_Server(io_context, address, port),
-      m_Logger(spdlog::stdout_color_st(fmt::format("Engine[{}]", m_RouteTable.GetID().to_string(), address, port))) {
-    m_Server.SetRequestProcessor(
-        [&](Request request, Network::Endpoint remote) -> Response {
+      m_Server(server),
+      m_Logger(spdlog::stdout_color_st(fmt::format("Engine[{}]", m_RouteTable.GetID().to_string()))) {
+    m_Server->SetRequestProcessor(
+        [&](const Network::Context& context) -> Response {
+            auto [request, remote] = context;
             // TODO black list may be used in here for those abused requests
 
             m_RouteTable.Add(ID(request.originid()), remote);
@@ -40,11 +39,7 @@ Engine::Engine(asio::io_context& io_context, std::string_view address, uint16_t 
             }
         });
 
-    asio::co_spawn(
-        io_context, [&]() -> asio::awaitable<void> {
-            co_await m_Server.Listen();
-        },
-        asio::detached);
+    m_Server->Listen();
 }
 
 asio::awaitable<bool> Engine::ConnectToNetwork(std::string_view address, uint16_t port) {
@@ -52,7 +47,7 @@ asio::awaitable<bool> Engine::ConnectToNetwork(std::string_view address, uint16_
 
     Request ping_request;
     ping_request.mutable_ping();
-    auto response = co_await m_Server.Send(ping_request, remote);
+    auto response = co_await m_Server->Send(ping_request, remote);
 
     if (!response.has_value())
         co_return false;

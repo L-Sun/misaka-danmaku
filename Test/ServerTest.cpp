@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "UdpServer.hpp"
 #include "TestUtils.hpp"
 
 #include <gtest/gtest.h>
@@ -17,7 +17,7 @@ protected:
     UdpServer& create_server_for_test() {
         thread_local uint16_t port   = 8000;
         auto&                 server = servers.emplace_back(io_context, "127.0.0.1", port++);
-        asio::co_spawn(io_context, server.Listen(), asio::detached);
+        server.Listen();
         return server;
     }
 
@@ -31,7 +31,7 @@ TEST_F(ServerTest, MessageTest) {
         auto& s1 = create_server_for_test();
         auto& s2 = create_server_for_test();
 
-        s1.SetRequestProcessor([](Request req, Endpoint) -> Response {
+        s1.SetRequestProcessor([](const Context& context) -> Response {
             Response res;
             res.mutable_ping()->set_state(PingResponse_State_RUNNING);
             return res;
