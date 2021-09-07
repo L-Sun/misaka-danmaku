@@ -187,11 +187,11 @@ protected:
 private:
     template <uint16_t N>
     static std::array<Engine, N> create_clients(asio::io_context& io_context, uint16_t portBase) {
-        constexpr auto impl = []<uint16_t... I>(asio::io_context & io_context, uint16_t portBase, std::index_sequence<I...>) {
+        constexpr auto impl = []<uint16_t... I>(asio::io_context & io_context, uint16_t portBase, std::integer_sequence<uint16_t, I...>) {
             return std::array{
                 Engine(std::make_shared<Misaka::Network::UdpServer>(io_context, "127.0.0.1", portBase + I))...};
         };
-        return impl(io_context, portBase, std::make_index_sequence<N>{});
+        return impl(io_context, portBase, std::make_integer_sequence<uint16_t, N>{});
     }
 };
 
