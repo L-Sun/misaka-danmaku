@@ -3,19 +3,19 @@
 #include <list>
 #include <optional>
 
-namespace Misaka::Kademlia {
+namespace misaka {
 
 template <typename Key, typename Value, size_t Capacity>
-class LRUCache {
+class lru_cache {
     using Node = typename std::pair<Key, Value>;
     using Iter = typename std::list<Node>::iterator;
 
 public:
-    LRUCache() = default;
-    LRUCache(const LRUCache& rhs) : m_Cache(rhs.m_Cache) {
+    lru_cache() = default;
+    lru_cache(const lru_cache& rhs) : m_Cache(rhs.m_Cache) {
         ReMap();
     }
-    LRUCache& operator=(const LRUCache& rhs) {
+    lru_cache& operator=(const lru_cache& rhs) {
         m_Cache = rhs.m_Cache;
         ReMap();
         return *this;
@@ -78,4 +78,4 @@ private:
     std::unordered_map<Key, Iter> m_Map;
 };
 
-}  // namespace Misaka::Kademlia
+}  // namespace misaka

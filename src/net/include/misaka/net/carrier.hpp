@@ -1,3 +1,4 @@
+#pragma once
 #include <asio/io_context.hpp>
 #include <asio/awaitable.hpp>
 #include <asio/use_awaitable.hpp>
@@ -8,7 +9,7 @@
 #include <optional>
 #include <unordered_map>
 
-namespace Misaka {
+namespace misaka {
 
 template <typename T>
 class Carrier {
@@ -54,4 +55,4 @@ private:
     std::unordered_map<uint64_t, size_t>     m_RefCounters;
 };
 
-}  // namespace Misaka
+}  // namespace misaka

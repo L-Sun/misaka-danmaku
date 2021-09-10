@@ -18,4 +18,4 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
 add_subdirectory(src)
-add_subdirectory(Test)
+add_subdirectory(tests)

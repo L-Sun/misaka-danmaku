@@ -1,5 +1,6 @@
 #pragma once
 
+#include <asio/io_context.hpp>
 #include <asio/co_spawn.hpp>
 #include <asio/awaitable.hpp>
 #include <asio/detached.hpp>

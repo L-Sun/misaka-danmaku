@@ -1,26 +1,21 @@
 #pragma once
-#include "LRUCache.hpp"
 
-#include "utils.hpp"
+#include <misaka/core/id.hpp>
+#include <misaka/lru_cache.hpp>
 
 #include <vector>
-#include <bitset>
 
-namespace Misaka::Kademlia {
-
+namespace misaka::core {
 constexpr size_t BucketSize = 20;
-constexpr size_t IDsize     = 160;
-
-using ID = std::bitset<IDsize>;
 
 template <typename T>
 class RouteTable {
 public:
-    RouteTable(ID id) : m_ID(id), m_Buckets(1) {}
+    RouteTable(KadID id) : m_ID(id), m_Buckets(1) {}
 
     auto GetID() const noexcept { return m_ID; }
 
-    void Add(ID id, T val) {
+    void Add(KadID id, T val) {
         auto dis = cpl(m_ID, id);
 
         if (dis >= m_Buckets.size() - 1 && m_Buckets.back().Full()) {
@@ -30,7 +25,7 @@ public:
         m_Buckets.at(std::min(dis, m_Buckets.size() - 1)).Add(id, val);
     }
 
-    auto& GetBucket(const ID& id) {
+    auto& GetBucket(const KadID& id) {
         auto dis = cpl(m_ID, id);
         return m_Buckets.at(std::min(dis, m_Buckets.size() - 1));
     }
@@ -44,7 +39,7 @@ public:
 
 private:
     void SplitUngroupedBucket() {
-        std::vector<ID> marker;
+        std::vector<KadID> marker;
         for (auto&& [id, val] : m_Buckets.back()) {
             if (cpl(id, m_ID) >= m_Buckets.size()) {
                 marker.emplace_back(id);
@@ -57,8 +52,8 @@ private:
         }
     }
 
-    const ID                                 m_ID;
-    std::vector<LRUCache<ID, T, BucketSize>> m_Buckets;
+    const KadID                                  m_ID;
+    std::vector<lru_cache<KadID, T, BucketSize>> m_Buckets;
 };
 
-}  // namespace Misaka::Kademlia
+}  // namespace misaka::core

@@ -1,13 +1,13 @@
 #pragma once
-#include "kademlia.pb.h"
-#include "Carrier.hpp"
+#include <misaka/protocol/kademlia.pb.h>
+#include <misaka/net/carrier.hpp>
 
 #include <asio/awaitable.hpp>
 #include <asio/ip/udp.hpp>
 
 #include <chrono>
 
-namespace Misaka::Network {
+namespace misaka::Network {
 
 using Endpoint = asio::ip::udp::endpoint;
 using Context  = std::tuple<Request, Endpoint>;
@@ -23,4 +23,4 @@ public:
                                                           const Endpoint&      remote,
                                                           std::chrono::seconds timeout = std::chrono::seconds(3))           = 0;
 };
-}  // namespace Misaka::Network
+}  // namespace misaka::Network

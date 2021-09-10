@@ -2,4 +2,5 @@ build
 
 .vscode
 
-src/KadProtocol/output
+src/protocol/include/misaka/protocol/*.pb.h
+src/protocol/include/misaka/protocol/*.pb.cc

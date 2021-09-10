@@ -1,4 +1,4 @@
-#include "Engine.hpp"
+#include <misaka/core/kademlia_engine.hpp>
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <fmt/format.h>
@@ -6,20 +6,20 @@
 template <class... Ts>
 struct overloaded : Ts... { using Ts::operator()...; };
 
-namespace Misaka::Kademlia {
+namespace misaka::core {
 
 using namespace std::chrono_literals;
 
-Engine::Engine(std::shared_ptr<Network::Server> server)
-    : m_RouteTable(random_bitset<IDsize>()),
+KadEngine::KadEngine(std::shared_ptr<Network::Server> server)
+    : m_RouteTable(GenerateRandomID<IDsize>()),
       m_Server(server),
-      m_Logger(spdlog::stdout_color_st(fmt::format("Engine[{}]", m_RouteTable.GetID().to_string()))) {
+      m_Logger(spdlog::stdout_color_st(fmt::format("KadEngine[{}]", m_RouteTable.GetID().to_string()))) {
     m_Server->SetRequestProcessor(
         [&](const Network::Context& context) -> Response {
             auto [request, remote] = context;
             // TODO black list may be used in here for those abused requests
 
-            m_RouteTable.Add(ID(request.originid()), remote);
+            m_RouteTable.Add(KadID(request.originid()), remote);
 
             switch (request.request_case()) {
                 case Request::RequestCase::kPing:
@@ -42,7 +42,7 @@ Engine::Engine(std::shared_ptr<Network::Server> server)
     m_Server->Listen();
 }
 
-asio::awaitable<bool> Engine::ConnectToNetwork(std::string_view address, uint16_t port) {
+asio::awaitable<bool> KadEngine::ConnectToNetwork(std::string_view address, uint16_t port) {
     Network::Endpoint remote(asio::ip::make_address(address), port);
 
     Request ping_request;
@@ -57,25 +57,25 @@ asio::awaitable<bool> Engine::ConnectToNetwork(std::string_view address, uint16_
         co_return false;
     }
 
-    m_RouteTable.Add(ID(response->originid()), remote);
+    m_RouteTable.Add(KadID(response->originid()), remote);
 
     co_return true;
 }
 
 // TODO call FindNode to find myself, and then populate the route table
-void Engine::FindMe() {
+void KadEngine::FindMe() {
 }
 
-PingResponse Engine::HandlePingRequest(const PingRequest& request) {
+PingResponse KadEngine::HandlePingRequest(const PingRequest& request) {
     PingResponse result;
     result.set_state(PingResponse_State::PingResponse_State_RUNNING);
     return result;
 }
 
-FindNodeResponse Engine::HandleFindNodeRequest(const FindNodeRequest& request) {
+FindNodeResponse KadEngine::HandleFindNodeRequest(const FindNodeRequest& request) {
     FindNodeResponse result;
 
-    for (auto&& [id, endpoint] : m_RouteTable.GetBucket(ID(request.id()))) {
+    for (auto&& [id, endpoint] : m_RouteTable.GetBucket(KadID(request.id()))) {
         auto node = result.add_nodes();
         node->set_id(id.to_string());
         node->set_address(endpoint.address().to_string());
@@ -85,7 +85,7 @@ FindNodeResponse Engine::HandleFindNodeRequest(const FindNodeRequest& request) {
     return result;
 }
 
-Request Engine::WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequest, FindValueRequest> request) {
+Request KadEngine::WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequest, FindValueRequest> request) {
     Request result;
     result.set_originid(m_RouteTable.GetID().to_string());
     std::visit(overloaded{
@@ -106,7 +106,7 @@ Request Engine::WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequ
     return result;
 }
 
-Response Engine::WrapResponse(std::variant<PingResponse, StoreResponse, FindNodeResponse, FindValueResponse> response) {
+Response KadEngine::WrapResponse(std::variant<PingResponse, StoreResponse, FindNodeResponse, FindValueResponse> response) {
     Response result;
     result.set_originid(m_RouteTable.GetID().to_string());
     std::visit(overloaded{
@@ -127,4 +127,4 @@ Response Engine::WrapResponse(std::variant<PingResponse, StoreResponse, FindNode
     return result;
 }
 
-}  // namespace Misaka::Kademlia
+}  // namespace misaka::core

@@ -1,7 +1,8 @@
-add_library(Core Core.cpp)
-target_link_libraries(Core PRIVATE Kademlia asio::asio spdlog::spdlog)
-target_include_directories(Core
-    INTERFACE 
-        "$<TARGET_PROPERTY:Kademlia,INTERFACE_INCLUDE_DIRECTORIES>"
-        ${CMAKE_CURRENT_SOURCE_DIR}
+add_library(kademlia kademlia_engine.cpp)
+target_link_libraries(kademlia PRIVATE server asio::asio spdlog::spdlog fmt::fmt)
+target_include_directories(kademlia
+    PUBLIC
+        "$<TARGET_PROPERTY:server,INTERFACE_INCLUDE_DIRECTORIES>"
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+

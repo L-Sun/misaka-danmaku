@@ -1,16 +1,16 @@
 #pragma once
-#include "Server.hpp"
-#include "RouteTable.hpp"
+#include <misaka/net/server.hpp>
+#include <misaka/core/route_table.hpp>
 
 #include <spdlog/logger.h>
 
 #include <memory>
 #include <variant>
 
-namespace Misaka::Kademlia {
-class Engine {
+namespace misaka::core {
+class KadEngine {
 public:
-    Engine(std::shared_ptr<Network::Server> server);
+    KadEngine(std::shared_ptr<Network::Server> server);
 
     asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
 
@@ -31,4 +31,4 @@ private:
     std::shared_ptr<spdlog::logger> m_Logger;
 };
 
-}  // namespace Misaka::Kademlia
+}  // namespace misaka::core

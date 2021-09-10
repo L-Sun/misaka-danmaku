@@ -1,4 +1,4 @@
-add_subdirectory(KadProtocol)
-add_subdirectory(Network)
-add_subdirectory(Kademlia)
-add_subdirectory(Core)
+add_subdirectory(protocol)
+add_subdirectory(utils)
+add_subdirectory(net)
+add_subdirectory(core)

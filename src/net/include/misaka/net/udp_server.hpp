@@ -1,5 +1,5 @@
 #pragma once
-#include "Server.hpp"
+#include <misaka/net/server.hpp>
 
 #include <spdlog/logger.h>
 
@@ -7,10 +7,10 @@
 #include <variant>
 #include <unordered_map>
 
-namespace Misaka::Network {
-class UdpServer : public Server {
+namespace misaka::Network {
+class udp_server : public Server {
 public:
-    UdpServer(asio::io_context& io_context, std::string_view address, uint16_t port);
+    udp_server(asio::io_context& io_context, std::string_view address, uint16_t port);
 
     void Listen() final;
     void StopListen() final;
@@ -41,4 +41,4 @@ private:
     std::shared_ptr<spdlog::logger>         m_Logger;
 };
 
-}  // namespace Misaka::Network
+}  // namespace misaka::Network
