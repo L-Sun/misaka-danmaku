@@ -6,7 +6,7 @@
 
 #include <list>
 
-using namespace misaka::Network;
+using namespace misaka::net;
 using namespace std::chrono_literals;
 
 class ServerTest : public ::testing::Test {

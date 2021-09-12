@@ -7,7 +7,7 @@
 #include <variant>
 #include <unordered_map>
 
-namespace misaka::Network {
+namespace misaka::net {
 class udp_server : public Server {
 public:
     udp_server(asio::io_context& io_context, std::string_view address, uint16_t port);
@@ -41,4 +41,4 @@ private:
     std::shared_ptr<spdlog::logger>         m_Logger;
 };
 
-}  // namespace misaka::Network
+}  // namespace misaka::net

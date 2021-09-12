@@ -10,7 +10,7 @@
 namespace misaka::core {
 class KadEngine {
 public:
-    KadEngine(std::shared_ptr<Network::Server> server);
+    KadEngine(std::shared_ptr<net::Server> server);
 
     asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
 
@@ -25,8 +25,8 @@ private:
     Request  WrapRequest(std::variant<PingRequest, StoreRequest, FindNodeRequest, FindValueRequest> request);
     Response WrapResponse(std::variant<PingResponse, StoreResponse, FindNodeResponse, FindValueResponse> response);
 
-    RouteTable<Network::Endpoint>    m_RouteTable;
-    std::shared_ptr<Network::Server> m_Server;
+    RouteTable<net::Endpoint>    m_RouteTable;
+    std::shared_ptr<net::Server> m_Server;
 
     std::shared_ptr<spdlog::logger> m_Logger;
 };

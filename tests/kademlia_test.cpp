@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "mock/server.hpp"
 
 #include <misaka/core/kademlia_engine.hpp>
 #include <misaka/net/udp_server.hpp>
@@ -9,6 +10,7 @@
 #include <unordered_set>
 
 using namespace misaka::core;
+using namespace ::testing;
 
 auto create_id(const char (&str)[200]) {
     std::string result(str);
@@ -112,44 +114,47 @@ TEST(TableTest, GetBucket) {
 
 class KademliaTest : public ::testing::Test {
 protected:
-    constexpr static uint16_t num_clients = 2;
-    KademliaTest()
-        : io_context(1),
-          seedServer(std::make_shared<misaka::Network::udp_server>(io_context, "127.0.0.1", 5000)),
-          clients{create_clients<num_clients>(io_context, 4000)} {
-        seedServer->SetRequestProcessor([](const misaka::Network::Context& context) -> Response {
-            auto [request, remote] = context;
-            Response response;
-            if (request.has_ping()) {
-                response.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
-            }
-            return response;
-        });
+    KademliaTest() : io_context(1), server(std::make_shared<MockServer>()) {}
 
-        seedServer->Listen();
-    }
-
-    ~KademliaTest() {}
-
-    asio::io_context                         io_context;
-    std::shared_ptr<misaka::Network::Server> seedServer;
-    std::array<KadEngine, num_clients>       clients;
-
-private:
-    template <uint16_t N>
-    static std::array<KadEngine, N> create_clients(asio::io_context& io_context, uint16_t portBase) {
-        constexpr auto impl = []<uint16_t... I>(asio::io_context & io_context, uint16_t portBase, std::integer_sequence<uint16_t, I...>) {
-            return std::array{
-                KadEngine(std::make_shared<misaka::Network::udp_server>(io_context, "127.0.0.1", portBase + I))...};
-        };
-        return impl(io_context, portBase, std::make_integer_sequence<uint16_t, N>{});
-    }
+    asio::io_context            io_context;
+    std::shared_ptr<MockServer> server;
 };
 
-TEST_F(KademliaTest, ConnectNetwork) {
+TEST_F(KademliaTest, InitEngine) {
+    using ::testing::_;
+    EXPECT_CALL(*server, Listen()).Times(1);
+    EXPECT_CALL(*server, SetRequestProcessor(_)).Times(1);
+
+    KadEngine engine(server);
+}
+
+TEST_F(KademliaTest, ConnectToNetwork) {
     co_test(io_context, [&]() -> asio::awaitable<void> {
-        EXPECT_TRUE(co_await clients[0].ConnectToNetwork("127.0.0.1", 5000)) << "it should be successful to connect to network.";
-        EXPECT_FALSE(co_await clients[1].ConnectToNetwork("127.0.0.1", 5001)) << "it should be failed to connect unexsist network.";
+        misaka::net::Endpoint alive_endpoint{asio::ip::make_address("127.0.0.1"), 1234};
+        Request               req;
+        req.mutable_ping();
+
+        Response res;
+        res.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
+
+        EXPECT_CALL(
+            *server,
+            Send(
+                Property(&Request::request_case, Request::RequestCase::kPing),
+                alive_endpoint,
+                _))
+            .WillOnce(CoReturn(std::make_optional(res)));
+
+        EXPECT_CALL(
+            *server,
+            Send(
+                Property(&Request::request_case, Request::RequestCase::kFindNode),
+                _,
+                _))
+            .Times(AtLeast(1));
+
+        KadEngine engine(server);
+        EXPECT_TRUE(co_await engine.ConnectToNetwork(alive_endpoint.address().to_string(), alive_endpoint.port()));
     });
 }
 

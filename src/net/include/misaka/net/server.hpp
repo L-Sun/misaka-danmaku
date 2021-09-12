@@ -7,13 +7,15 @@
 
 #include <chrono>
 
-namespace misaka::Network {
+namespace misaka::net {
 
 using Endpoint = asio::ip::udp::endpoint;
 using Context  = std::tuple<Request, Endpoint>;
 
 class Server {
 public:
+    virtual ~Server() {}
+
     virtual void Listen()     = 0;
     virtual void StopListen() = 0;
 
@@ -23,4 +25,4 @@ public:
                                                           const Endpoint&      remote,
                                                           std::chrono::seconds timeout = std::chrono::seconds(3))           = 0;
 };
-}  // namespace misaka::Network
+}  // namespace misaka::net

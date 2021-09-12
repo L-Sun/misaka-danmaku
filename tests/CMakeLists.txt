@@ -1,7 +1,7 @@
 include(GoogleTest)
 
 add_library(test_utils INTERFACE)
-target_link_libraries(test_utils INTERFACE asio::asio GTest::gtest)
+target_link_libraries(test_utils INTERFACE GTest::gmock asio::asio)
 
 add_executable(utils_test utils_test.cpp)
 target_link_libraries(utils_test PRIVATE server test_utils)

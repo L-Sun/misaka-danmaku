@@ -10,12 +10,12 @@ namespace misaka::core {
 
 using namespace std::chrono_literals;
 
-KadEngine::KadEngine(std::shared_ptr<Network::Server> server)
+KadEngine::KadEngine(std::shared_ptr<net::Server> server)
     : m_RouteTable(GenerateRandomID<IDsize>()),
       m_Server(server),
       m_Logger(spdlog::stdout_color_st(fmt::format("KadEngine[{}]", m_RouteTable.GetID().to_string()))) {
     m_Server->SetRequestProcessor(
-        [&](const Network::Context& context) -> Response {
+        [&](const net::Context& context) -> Response {
             auto [request, remote] = context;
             // TODO black list may be used in here for those abused requests
 
@@ -43,7 +43,7 @@ KadEngine::KadEngine(std::shared_ptr<Network::Server> server)
 }
 
 asio::awaitable<bool> KadEngine::ConnectToNetwork(std::string_view address, uint16_t port) {
-    Network::Endpoint remote(asio::ip::make_address(address), port);
+    net::Endpoint remote(asio::ip::make_address(address), port);
 
     Request ping_request;
     ping_request.mutable_ping();
