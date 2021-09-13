@@ -134,24 +134,41 @@ TEST_F(KademliaTest, ConnectToNetwork) {
         Request               req;
         req.mutable_ping();
 
-        Response res;
-        res.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
+        {
+            Response res;
+            res.mutable_ping()->set_state(PingResponse_State::PingResponse_State_RUNNING);
 
-        EXPECT_CALL(
-            *server,
-            Send(
-                Property(&Request::request_case, Request::RequestCase::kPing),
-                alive_endpoint,
-                _))
-            .WillOnce(CoReturn(std::make_optional(res)));
+            EXPECT_CALL(
+                *server,
+                Send(
+                    Property(&Request::request_case, Request::RequestCase::kPing),
+                    alive_endpoint,
+                    _))
+                .WillOnce(CoReturn(std::make_optional<Response>(res)));
+        }
 
-        EXPECT_CALL(
-            *server,
-            Send(
-                Property(&Request::request_case, Request::RequestCase::kFindNode),
-                _,
-                _))
-            .Times(AtLeast(1));
+        {
+            Response res1;
+            for (size_t i = 0; i < 3; i++) {
+                auto node = res1.mutable_findnode()->add_nodes();
+                node->set_address("127.0.0.2");
+                node->set_port(1235 + i);
+                node->set_id(GenerateRandomID().to_string());
+            }
+
+            Response res2;
+            res2.CopyFrom(res1);
+            res2.mutable_findnode()->clear_nodes();
+            EXPECT_CALL(
+                *server,
+                Send(
+                    Property(&Request::request_case, Request::RequestCase::kFindNode),
+                    _,
+                    _))
+                .Times(4)
+                .WillOnce(CoReturn(std::make_optional(res1)))
+                .WillRepeatedly(CoReturn(std::make_optional(res2)));
+        }
 
         KadEngine engine(server);
         EXPECT_TRUE(co_await engine.ConnectToNetwork(alive_endpoint.address().to_string(), alive_endpoint.port()));

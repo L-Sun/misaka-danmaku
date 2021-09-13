@@ -24,11 +24,12 @@ template <typename T>
 auto CoReturn(T&& val) {
     using ::testing::ByMove;
     using ::testing::Return;
-    return Return(
-        ByMove(
-            asio::async_compose<decltype(asio::use_awaitable), void(T)>(
-                [_val = std::move(val)](auto&& self) {
-                    self.complete(_val);
-                },
-                asio::use_awaitable)));
+    using ::testing::Unused;
+    return [_val = std::move(val)](Unused...) {
+        return asio::async_compose<decltype(asio::use_awaitable), void(T)>(
+            [__val = std::move(_val)](auto&& self) {
+                self.complete(__val);
+            },
+            asio::use_awaitable);
+    };
 }

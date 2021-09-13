@@ -25,6 +25,13 @@ public:
         m_Buckets.at(std::min(dis, m_Buckets.size() - 1)).Add(id, val);
     }
 
+    bool Has(const KadID& id) const noexcept {
+        auto dis = cpl(m_ID, id);
+        if (dis >= m_Buckets.size()) return false;
+        auto bucket = m_Buckets.at(dis);
+        return bucket.Has(id);
+    }
+
     auto& GetBucket(const KadID& id) {
         auto dis = cpl(m_ID, id);
         return m_Buckets.at(std::min(dis, m_Buckets.size() - 1));
@@ -52,8 +59,8 @@ private:
         }
     }
 
-    const KadID                                  m_ID;
-    std::vector<lru_cache<KadID, T, BucketSize>> m_Buckets;
+    const KadID                                 m_ID;
+    std::vector<LRUCache<KadID, T, BucketSize>> m_Buckets;
 };
 
 }  // namespace misaka::core

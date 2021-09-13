@@ -15,7 +15,7 @@ public:
     asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
 
 private:
-    void FindMe();
+    asio::awaitable<void> FindMe(const net::Endpoint& seed);
 
     PingResponse      HandlePingRequest(const PingRequest& request);
     StoreResponse     HandleStoreRequest(const StoreRequest& request);

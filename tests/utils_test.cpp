@@ -12,7 +12,7 @@ protected:
         for (size_t i = 0; i < 8; i++)
             EXPECT_NO_THROW(cache.Add(i, i));
     }
-    lru_cache<int, int, 8> cache;
+    LRUCache<int, int, 8> cache;
 };
 
 TEST_F(LRUTest, Add) {
@@ -24,7 +24,7 @@ TEST_F(LRUTest, Get) {
     EXPECT_EQ(cache.Get(0), 0);
     EXPECT_EQ(cache.Get(9), std::nullopt);
 
-    lru_cache<int, int, 8> cache2;
+    LRUCache<int, int, 8> cache2;
     cache2.Add(0, 1);
     EXPECT_EQ(cache2.Get(0), 1);
     EXPECT_EQ(cache2.Get(0), 1);

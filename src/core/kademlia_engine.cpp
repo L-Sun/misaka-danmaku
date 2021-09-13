@@ -3,6 +3,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <fmt/format.h>
 
+#include <queue>
+
 template <class... Ts>
 struct overloaded : Ts... { using Ts::operator()...; };
 
@@ -57,13 +59,50 @@ asio::awaitable<bool> KadEngine::ConnectToNetwork(std::string_view address, uint
         co_return false;
     }
 
-    m_RouteTable.Add(KadID(response->originid()), remote);
+    co_await FindMe(remote);
 
     co_return true;
 }
 
-// TODO call FindNode to find myself, and then populate the route table
-void KadEngine::FindMe() {
+asio::awaitable<void> KadEngine::FindMe(const net::Endpoint& seed) {
+    if (m_RouteTable.Full()) co_return;
+
+    // waiting for sending message
+    // TODO use unique container to decline unnecessary request
+    std::queue<net::Endpoint> remote_queue;
+    remote_queue.push(seed);
+
+    // TODO use asio::experimental::parallel_group to speed up the population of route
+    while (!(m_RouteTable.Full() || remote_queue.empty())) {
+        auto remote = std::move(remote_queue.front());
+        remote_queue.pop();
+
+        FindNodeRequest request;
+        request.set_id(m_RouteTable.GetID().to_string());
+        auto result = co_await m_Server->Send(WrapRequest(request), remote);
+
+        if (!result.has_value()) continue;
+
+        KadID remote_id(result->originid());
+
+        if (!result->has_findnode()) {
+            m_Logger->warn("ReUnexpected message from remote[{}]", remote_id.to_string());
+            continue;
+        }
+
+        if (m_RouteTable.Has(remote_id)) continue;
+
+        // We add this node after checking if there is a correct response,
+        // because remote endpoint may has a incorrect implementatio of kademlia engine or orther reasons.
+        m_RouteTable.Add(std::move(remote_id), remote);
+
+        // TODO use the k good quality nodes, avoid long watting.
+        for (auto&& node : result->findnode().nodes()) {
+            remote_queue.push(
+                net::Endpoint{asio::ip::make_address(node.address()),
+                              static_cast<uint16_t>(node.port())});
+        }
+    }
 }
 
 PingResponse KadEngine::HandlePingRequest(const PingRequest& request) {

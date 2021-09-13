@@ -6,16 +6,16 @@
 namespace misaka {
 
 template <typename Key, typename Value, size_t Capacity>
-class lru_cache {
+class LRUCache {
     using Node = typename std::pair<Key, Value>;
     using Iter = typename std::list<Node>::iterator;
 
 public:
-    lru_cache() = default;
-    lru_cache(const lru_cache& rhs) : m_Cache(rhs.m_Cache) {
+    LRUCache() = default;
+    LRUCache(const LRUCache& rhs) : m_Cache(rhs.m_Cache) {
         ReMap();
     }
-    lru_cache& operator=(const lru_cache& rhs) {
+    LRUCache& operator=(const LRUCache& rhs) {
         m_Cache = rhs.m_Cache;
         ReMap();
         return *this;
@@ -33,7 +33,7 @@ public:
         }
     }
 
-    Value Remove(Key key) {
+    Value Remove(const Key& key) {
         Iter  iter   = m_Map.at(key);
         Value result = std::move(iter->second);
         m_Cache.erase(iter);
@@ -46,6 +46,10 @@ public:
 
         MakeRecently(key);
         return m_Cache.front().second;
+    }
+
+    bool Has(const Key& key) const noexcept {
+        return m_Map.count(key) != 0;
     }
 
     bool Full() const noexcept { return m_Map.size() == Capacity; }
