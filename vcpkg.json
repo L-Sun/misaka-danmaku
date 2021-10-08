@@ -7,6 +7,7 @@
         "gtest",
         "protobuf",
         "spdlog",
-        "fmt"
+        "fmt",
+        "sqlite-orm"
     ]
 }
