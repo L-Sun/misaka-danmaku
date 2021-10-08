@@ -175,29 +175,6 @@ TEST_F(KademliaTest, ConnectToNetwork) {
     });
 }
 
-TEST_F(KademliaTest, StoreValue) {
-    co_test(io_context, [&]() -> asio::awaitable<void> {
-        misaka::net::Endpoint alive_endpoint{asio::ip::make_address("127.0.0.1"), 1234};
-
-        {
-            Response res;
-            res.mutable_store()->set_state(StoreResponse_State::StoreResponse_State_SUCCESS);
-
-            EXPECT_CALL(
-                *server,
-                Send(
-                    Property(&Request::request_case, Request::RequestCase::kStore),
-                    _,
-                    _))
-                .Times(1)
-                .WillOnce(CoReturn(std::make_optional(res)));
-        }
-
-        KadEngine engine(server);
-        EXPECT_TRUE(co_await engine.Store("key", "hello, world!"));
-    });
-}
-
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
