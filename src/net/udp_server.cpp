@@ -16,7 +16,7 @@ struct overloaded : Ts... { using Ts::operator()...; };
 
 namespace misaka::net {
 
-udp_server::udp_server(
+UdpServer::UdpServer(
     asio::io_context& io_context,
     std::string_view  address,
     uint16_t          port)
@@ -31,7 +31,7 @@ udp_server::udp_server(
     m_Logger->info("Init");
 }
 
-void udp_server::Listen() {
+void UdpServer::Listen() {
     if (m_Running || std::chrono::steady_clock::now() < m_RunningTimer.expiry()) return;
 
     m_Running = true;
@@ -61,18 +61,18 @@ void udp_server::Listen() {
         asio::detached);
 }
 
-void udp_server::StopListen() {
+void UdpServer::StopListen() {
     m_Logger->info("stop listening.");
     m_Running = false;
 }
 
-void udp_server::SetRequestProcessor(std::function<Response(const Context&)> processor) {
+void UdpServer::SetRequestProcessor(std::function<Response(const Context&)> processor) {
     m_RequestProcessor = processor;
 }
 
-asio::awaitable<std::optional<Response>> udp_server::Send(Request              request,
-                                                          const Endpoint&      remote,
-                                                          std::chrono::seconds timeout) {
+asio::awaitable<std::optional<Response>> UdpServer::Send(Request              request,
+                                                         const Endpoint&      remote,
+                                                         std::chrono::seconds timeout) {
     auto message = GenerateMessage(std::move(request));
     auto buffer  = message.SerializeAsString();
     try {
@@ -89,7 +89,7 @@ asio::awaitable<std::optional<Response>> udp_server::Send(Request              r
     co_return response;
 }
 
-KademliaMessage udp_server::GenerateMessage(std::variant<Request, Response> payload, std::optional<uint64_t> message_id) {
+KademliaMessage UdpServer::GenerateMessage(std::variant<Request, Response> payload, std::optional<uint64_t> message_id) {
     static thread_local std::mt19937_64     generator;
     std::uniform_int_distribution<uint64_t> distribution(
         std::numeric_limits<uint64_t>::min(),
@@ -112,7 +112,7 @@ KademliaMessage udp_server::GenerateMessage(std::variant<Request, Response> payl
     return message;
 }
 
-asio::awaitable<void> udp_server::ProcessMessage(uint8_t* data, size_t n, const Endpoint& remote) {
+asio::awaitable<void> UdpServer::ProcessMessage(uint8_t* data, size_t n, const Endpoint& remote) {
     KademliaMessage message;
     if (!message.ParseFromArray(data, n)) {
         m_Logger->warn("The data form {}:{} can not be parse, and it will be discard!",

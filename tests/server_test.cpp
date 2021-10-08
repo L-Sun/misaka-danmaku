@@ -15,16 +15,16 @@ protected:
         : io_context(1),
           offline_endpoint(asio::ip::make_address("127.0.0.2"), 62312) {}
 
-    udp_server& create_server_for_test() {
+    UdpServer& create_server_for_test() {
         thread_local uint16_t port   = 8000;
         auto&                 server = servers.emplace_back(io_context, "127.0.0.1", port++);
         server.Listen();
         return server;
     }
 
-    Endpoint              offline_endpoint;
-    asio::io_context      io_context;
-    std::list<udp_server> servers;
+    Endpoint             offline_endpoint;
+    asio::io_context     io_context;
+    std::list<UdpServer> servers;
 };
 
 TEST_F(ServerTest, MessageTest) {

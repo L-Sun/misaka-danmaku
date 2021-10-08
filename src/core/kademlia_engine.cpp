@@ -44,9 +44,7 @@ KadEngine::KadEngine(std::shared_ptr<net::Server> server)
     m_Server->Listen();
 }
 
-asio::awaitable<bool> KadEngine::ConnectToNetwork(std::string_view address, uint16_t port) {
-    net::Endpoint remote(asio::ip::make_address(address), port);
-
+asio::awaitable<bool> KadEngine::ConnectToNetwork(const net::Endpoint& remote) {
     Request ping_request;
     ping_request.mutable_ping();
     auto response = co_await m_Server->Send(ping_request, remote);
@@ -55,7 +53,7 @@ asio::awaitable<bool> KadEngine::ConnectToNetwork(std::string_view address, uint
         co_return false;
 
     if (!response->has_ping()) {
-        m_Logger->warn("Recive a unexpect message from remote {}:{}", address, port);
+        m_Logger->warn("Recive a unexpect message from remote {}:{}", remote.address().to_string(), remote.port());
         co_return false;
     }
 

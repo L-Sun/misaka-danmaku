@@ -12,7 +12,13 @@ class KadEngine {
 public:
     KadEngine(std::shared_ptr<net::Server> server);
 
-    asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port);
+    inline asio::awaitable<bool> ConnectToNetwork(std::string_view address, uint16_t port) {
+        net::Endpoint remote(asio::ip::make_address(address), port);
+        co_return ConnectToNetwork(remote);
+    }
+    
+    asio::awaitable<bool> ConnectToNetwork(const net::Endpoint& endpoint);
+    asio::awaitable<bool> Store(std::string_view key, std::string_view value);
 
 private:
     asio::awaitable<void> FindMe(const net::Endpoint& seed);

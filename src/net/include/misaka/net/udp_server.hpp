@@ -8,9 +8,9 @@
 #include <unordered_map>
 
 namespace misaka::net {
-class udp_server : public Server {
+class UdpServer : public Server {
 public:
-    udp_server(asio::io_context& io_context, std::string_view address, uint16_t port);
+    UdpServer(asio::io_context& io_context, std::string_view address, uint16_t port);
 
     void Listen() final;
     void StopListen() final;
